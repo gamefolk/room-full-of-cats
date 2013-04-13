@@ -6,7 +6,7 @@ void init_music() {
     NR52_REG = 0x80;
 
     NR10_REG = 0;       // No frequency sweep
-    NR11_REG = 0x40;    // Wave duty 50%
+    NR11_REG = 0x80;    // Wave duty 50%
     NR12_REG = 0xF0;    // Maximum volume
 }
 
@@ -33,7 +33,25 @@ const UWORD frequencies[] = {
 
 // Represents the music to be played sequentially
 const UBYTE music[] = {
-    C0, D0, E0, F0, G0, A0, B0, C1, END
+    C2, C2, SILENCE, C2, C2, SILENCE, C2, C2,
+    G1, G1, SILENCE, G1, G1, SILENCE, G1, G1, 
+    F1, F1, SILENCE, F1, F1, SILENCE, F1, F1, 
+    A1, A1, SILENCE, G1, G1, SILENCE, C2, SILENCE,
+    
+    // Loop again 
+    C2, C2, SILENCE, C2, C2, SILENCE, C2, C2,
+    G1, G1, SILENCE, G1, G1, SILENCE, G1, G1, 
+    F1, F1, SILENCE, F1, F1, SILENCE, F1, F1, 
+    A1, A1, SILENCE, G1, G1, SILENCE,
+
+    C3, C3, C3, D3, D3, D3, C3, C3, B2, B2, B2, 
+    C3, C3, C3, B2, B2, A2, A2, A2, B2, B2, B2,
+    A2, A2, G2, G2, C3, B2, C3, C3, SILENCE,
+
+    C3, SILENCE, B2, SILENCE, A2, SILENCE, B2, SILENCE, C3, C3, C3, SILENCE, 
+    C1, C1, C1, SILENCE, SILENCE, 
+    
+    END
 };
 
 // Plays music with appropriate time between vblanks
@@ -41,26 +59,30 @@ void play_music(BOOLEAN should_loop) {
     UWORD freq;
     static UBYTE note_index = 0;
     static UBYTE vblanks = 0;
-    static const int VBLANK_LIMIT = 30;
+    static const int VBLANK_LIMIT = 10;
 
 
     vblanks++;
     if (vblanks > VBLANK_LIMIT) {
-        if(music[note_index] == END) {
-            if (should_loop) {
-                note_index = 0;
-            } else {
+        switch(music[note_index]) {
+            case SILENCE: 
                 NR12_REG = 0;
-                return;
-            }
-        } 
-
-        freq = frequencies[music[note_index]];
-       
-        NR13_REG = (unsigned char)freq;     // Low bits of frequency
-        NR14_REG = 0x80 | (freq >> 8);      // High bits of frequency
-        note_index++;
+                break;
+           
+            case END:
+                if (should_loop) {
+                    note_index = 0;
+                }
+            // Fall through
+            default:
+                NR12_REG = 0xF0; 
+                freq = frequencies[music[note_index]];
+           
+                NR13_REG = (unsigned char)freq;     // Low bits of frequency
+                NR14_REG = 0x80 | (freq >> 8);      // High bits of frequency
+        }
         
+        note_index++;
         vblanks = 0;
     }
 }
