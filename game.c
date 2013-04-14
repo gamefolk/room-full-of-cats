@@ -7,6 +7,8 @@
 #include "background.c"
 #include "bgtiles.c"
 
+#include "music.h"
+
 #define COLUMNSIZE 0x04 // cats per column
 
 UWORD colNum, colX, colY, sprID, tileID, temp, i;
@@ -16,8 +18,6 @@ unsigned char buttons;
 INT8 gen;
 fixed seed;
 
-void play_music(BOOLEAN);
-void init_music();
 //void make_background();
 
 void clearTiles()
