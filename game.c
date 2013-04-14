@@ -1,11 +1,11 @@
 #include <gb/gb.h>
 #include <rand.h>
 
-#include "fallcats.c"
-#include "blank.c"
-#include "stackcats.c"
-#include "background.c"
-#include "bgtiles.c"
+#include "tiles/fallcats.c"
+#include "tiles/blank.c"
+#include "tiles/stackcats.c"
+#include "tiles/background.c"
+#include "tiles/bgtiles.c"
 
 #include "music.h"
 
