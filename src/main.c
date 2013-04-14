@@ -2,8 +2,8 @@
 #include<stdio.h>
 #include<gb/console.h>
 
-#include "gameplay.h"
-#include "music.h"
+#include "include/gameplay.h"
+#include "include/music.h"
 
 void main() {
     BOOLEAN should_loop = 1;
