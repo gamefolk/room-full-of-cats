@@ -1,6 +1,4 @@
 #include<gb/gb.h>
-#include<gb/console.h>
-#include<stdio.h>
 #include<rand.h>
 
 #include "tiles/fallcats.c"
