@@ -17,25 +17,19 @@ unsigned char buttons;
 INT8 gen;
 fixed seed;
 
-//void make_background();
-
-void clearTiles()
-{
-	for (i=0; i < 0x400; i++)
-	{
+void clearTiles() {
+	for (i = 0; i < 0x400; i++) {
 		*(UWORD*)(0x9800 + i) = 0x00;
 	}
 }
 
-void makeColumn()
-{
+void makeColumn() {
 	UWORD cur, y, x;
 	
 	cur = 0xC000;
 	cur += colNum * (COLUMN_SIZE * 0x08);
 		
-	for (y = 0x20; y < (0x20 + ((UBYTE)COLUMN_SIZE * 0x10)); y += 0x14)
-	{
+	for (y = 0x20; y < (0x20 + ((UBYTE)COLUMN_SIZE * 0x10)); y += 0x14) {
 		x = colX;
 		
 		*(unsigned char*)(cur) = y;
@@ -54,8 +48,7 @@ void makeColumn()
 	}
 }
 
-UWORD setColumn()
-{
+UWORD setColumn() {
 	UWORD cur, last;
 
 	cur = 0xC002;
@@ -87,53 +80,39 @@ UWORD setColumn()
 	lastTarget = cur;
 }*/
 
-void setBuckets()
-{
-	switch (sprID)
-	{
+void setBuckets() {
+	switch (sprID) {
 		case(0x04):
-			if (buckets[colNum] == 0x03)
-			{
+			if (buckets[colNum] == 0x03) {
 				score[colNum] = 0x03;
-			}
-			else
-			{
+			} else {
 				buckets[colNum] = 0x03;
 				score[colNum] = 0;
 			}
 		break;
 				
 		case(0x08):
-			if (buckets[colNum] == 0x04)
-			{
+			if (buckets[colNum] == 0x04) {
 				score[colNum] = 0x04;
-			}
-			else
-			{
+			} else {
 				buckets[colNum] = 0x04;
 				score[colNum] = 0;
 			}
 		break;
 				
 		case(0x0C):
-			if (buckets[colNum] == 0x02)
-			{
+			if (buckets[colNum] == 0x02) {
 				score[colNum] = 0x02;
-			}
-			else
-			{
+			} else {
 				buckets[colNum] = 0x02;
 				score[colNum] = 0;
 			}
 		break;
 				
 		case(0x10):
-			if (buckets[colNum] == 0x01)
-			{
+			if (buckets[colNum] == 0x01) {
 				score[colNum] = 0x01;
-			}
-			else
-			{
+            } else {
 				buckets[colNum] = 0x01;
 				score[colNum] = 0;
 			}
@@ -141,24 +120,19 @@ void setBuckets()
 	}
 }
 
-void moveRow()
-{		
+void moveRow() {	
 	UWORD startY;
 	
 	startY = colY;
 	
-	for (colNum = 0x00; colNum < 0x03; colNum++)
-	{
+	for (colNum = 0x00; colNum < 0x03; colNum++) {
 		sprID = 0x00;
 		sprID = setColumn();
 		
-		if (colY < 0x03)
-		{
+		if (colY < 0x03) {
 			colY += 0x01;
 			setColumn();
-		}
-		else
-		{
+		} else {
 			setBuckets();
 		}
 		
@@ -166,8 +140,7 @@ void moveRow()
 	}
 }
 
-void moveRows()
-{
+void moveRows() {
 	colY = 0x03;
 	moveRow();
 	colY = 0x02;
@@ -178,8 +151,7 @@ void moveRows()
 	moveRow();
 }
 
-UWORD pickCat()
-{
+UWORD pickCat() {
 	gen = rand();
 	
 	if (gen < -63)
@@ -192,8 +164,7 @@ UWORD pickCat()
 		return 0x10;
 }
 
-void startRow()
-{	
+void startRow() {	
 	colNum = 0x00;
 	colY = 0x00;
 	sprID = pickCat();
@@ -233,7 +204,7 @@ void init_gameplay() {
 	seed.b.h = DIV_REG;
 	initrand(seed.w);
 
-//    make_background();
+    // make_background();
 	
 	// load sprite tiles
 	
@@ -254,23 +225,22 @@ void init_gameplay() {
 	
 	// load tile tiles
 	
-	for(i=0; i < 0x10; i++)
+	for(i = 0; i < 0x10; i++)
 		*(UWORD*)(0x9000+i) = blank8[i];
 	
-	for(i=0; i < 0x40; i++)
+	for(i = 0; i < 0x40; i++)
 		*(UWORD*)(0x9010+i) = faces[i];
 	
 	// clear background tiles
 	
 	clearTiles();
 	
-   // tim shit 
+    // background code
     //set_bkg_data(0,10,bgtiles);
 	
 	//set_bkg_data(0, 4, tileData);
 	
-	/*for (i=0; i < 0x400; i++)
-	{
+	/*for (i=0; i < 0x400; i++) {
 		*(UWORD*)(0x9800 + i) = 10;
 	}*/
 
@@ -281,8 +251,7 @@ void init_gameplay() {
 	colNum = 0x00;
 	colX = 0x2B;
 	
-	for (i = 0; i < 3; i++)
-	{
+	for (i = 0; i < 3; i++) {
 		makeColumn();
 		colNum++;
 		colX += 0x18;
@@ -329,25 +298,15 @@ void do_gameplay() {
 
     if (vblanks > VBLANK_LIMIT) {
         vblanks = 0;
-        for (i = 0; i < 4; i++)
-		{
+        for (i = 0; i < 4; i++) {
 			temp = i + i + i;
 			*(UWORD*)(0x9800 + 0x1C0 + 0x04 + temp) = buckets[i];
 			*(UWORD*)(0x9801 + 0x1C0 + 0x04 + temp) = score[i];
 		}
 		
-		/*for (i = 0; i < score[0]; i++)
-		{
+		/*for (i = 0; i < score[0]; i++) {
 			*(UWORD*)(0x9800 + 0x1C0 + 0x04 + i) = buckets[0];
 		}*/
-		
-//0
-		
-		//disable_interrupts();
-		
-		//delay(1000);
-		
-		
 		
 		/*colNum = targetX;
 		colY = targetY;
