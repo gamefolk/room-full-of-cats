@@ -1,5 +1,5 @@
-#include<gb/gb.h>
-#include<rand.h>
+#include <gb/gb.h>
+#include <rand.h>
 
 #include "tiles/fallcats.c"
 #include "tiles/blank.c"
@@ -7,7 +7,7 @@
 #include "tiles/background.c"
 #include "tiles/bgtiles.c"
 
-#define COLUMNSIZE 0x04         // cats per column
+const UWORD COLUMN_SIZE = 0x04; // cats per column
 const UWORD VBLANK_LIMIT = 60;  // number of vblanks until gameplay update
 
 UWORD colNum, colX, colY, sprID, tileID, temp, i;
@@ -32,9 +32,9 @@ void makeColumn()
 	UWORD cur, y, x;
 	
 	cur = 0xC000;
-	cur += colNum * (COLUMNSIZE * 0x08);
+	cur += colNum * (COLUMN_SIZE * 0x08);
 		
-	for (y = 0x20; y < (0x20 + (COLUMNSIZE * 0x10)); y += 0x14)
+	for (y = 0x20; y < (0x20 + ((UBYTE)COLUMN_SIZE * 0x10)); y += 0x14)
 	{
 		x = colX;
 		
@@ -59,7 +59,7 @@ UWORD setColumn()
 	UWORD cur, last;
 
 	cur = 0xC002;
-	cur += colNum * (COLUMNSIZE * 0x08);
+	cur += colNum * (COLUMN_SIZE * 0x08);
 	cur += colY * 0x08;
 	
 	last = *(unsigned char*)(cur);
