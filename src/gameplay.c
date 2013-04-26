@@ -7,19 +7,19 @@
 #include "tiles/background.c"
 #include "tiles/bgtiles.c"
 
+// IDs to identify which cat is falling
+#define STRIPED_CAT_ID  0x04
+#define BLACK_CAT_ID    0x08
+#define FALLING_CAT_ID  0x0C
+#define SIAMESE_CAT_ID  0x10
+
 const UWORD COLUMN_SIZE = 0x04; // cats per column
 const UWORD VBLANK_LIMIT = 60;  // number of vblanks until gameplay update
 
-// IDs to identify which cat is falling
-const UBYTE STRIPED_CAT_ID = 0x04;
-const UBYTE BLACK_CAT_ID   = 0x08;
-const UBYTE FALLING_CAT_ID = 0x0C;
-const UBYTE SIAMESE_CAT_ID = 0x10;
 
-UWORD colNum, colX, colY, sprID, tileID, temp, i;
+UWORD colNum, colX, colY, sprID, tileID, i;
 UWORD buckets[4]; 
 UWORD score[4];
-unsigned char buttons;
 
 fixed seed;
 
@@ -216,19 +216,19 @@ void init_gameplay() {
 	// load sprite tiles
 	
 	for (i = 0; i < 0x40; i++)
-		*(UWORD*)(0x8000+i) = blank16[i];
+		*(UWORD*)(0x8000 + i) = blank16[i];
 	
 	for (i = 0; i < 0x40; i++)
-		*(UWORD*)(0x8040+i) = cat0[i];
+		*(UWORD*)(0x8040 + i) = cat0[i];
 	
 	for (i = 0; i < 0x40; i++)
-		*(UWORD*)(0x8080+i) = cat1[i];
+		*(UWORD*)(0x8080 + i) = cat1[i];
 	
 	for (i = 0; i < 0x40; i++)
-		*(UWORD*)(0x80C0+i) = cat2[i];
+		*(UWORD*)(0x80C0 + i) = cat2[i];
 	
 	for (i = 0; i < 0x40; i++)
-		*(UWORD*)(0x8100+i) = cat3[i];
+		*(UWORD*)(0x8100 + i) = cat3[i];
 	
 	// load tile tiles
 	
@@ -274,6 +274,8 @@ void init_gameplay() {
 
 void do_gameplay() {
     static UBYTE vblanks = 0;
+    UBYTE buttons;
+
     vblanks++;
 
     buttons = joypad();
@@ -306,9 +308,10 @@ void do_gameplay() {
     if (vblanks > VBLANK_LIMIT) {
         vblanks = 0;
         for (i = 0; i < 4; i++) {
-			temp = i + i + i;
-			*(UWORD*)(0x9800 + 0x1C0 + 0x04 + temp) = buckets[i];
-			*(UWORD*)(0x9801 + 0x1C0 + 0x04 + temp) = score[i];
+            UWORD columnOffset;
+			columnOffset = 3 * i ;
+			*(UWORD*)(0x9800 + 0x1C0 + 0x04 + columnOffset) = buckets[i];
+			*(UWORD*)(0x9801 + 0x1C0 + 0x04 + columnOffset) = score[i];
 		}
 		
 		/*for (i = 0; i < score[0]; i++) {
