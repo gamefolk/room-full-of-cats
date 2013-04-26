@@ -13,17 +13,17 @@
 #define FALLING_CAT_ID  0x0C
 #define SIAMESE_CAT_ID  0x10
 
-const UWORD COLUMN_SIZE = 0x04; // cats per column
+const UWORD COLUMN_SIZE  = 0x04; // cats per column
 const UWORD VBLANK_LIMIT = 60;  // number of vblanks until gameplay update
 
-
-UWORD colNum, colX, colY, sprID, tileID, i;
+UWORD colNum, colX, colY, sprID, tileID;
 UWORD buckets[4]; 
 UWORD score[4];
 
 fixed seed;
 
 void clearTiles() {
+    UWORD i;
 	for (i = 0; i < 0x400; i++) {
 		*(UWORD*)(0x9800 + i) = 0x00;
 	}
@@ -196,6 +196,13 @@ void startRow() {
 	setColumn();*/
 }
 
+void load_sprite(UWORD mem_offset, char* sprite) {
+   UWORD i;
+   for(i = 0; i < 0x40; i++) {
+       *(UWORD*)(mem_offset + i) = sprite[i];
+   }
+}
+
 void init_gameplay() {
 	UWORD i;
 	
@@ -214,24 +221,13 @@ void init_gameplay() {
     // make_background();
 	
 	// load sprite tiles
-	
-	for (i = 0; i < 0x40; i++)
-		*(UWORD*)(0x8000 + i) = blank16[i];
-	
-	for (i = 0; i < 0x40; i++)
-		*(UWORD*)(0x8040 + i) = cat0[i];
-	
-	for (i = 0; i < 0x40; i++)
-		*(UWORD*)(0x8080 + i) = cat1[i];
-	
-	for (i = 0; i < 0x40; i++)
-		*(UWORD*)(0x80C0 + i) = cat2[i];
-	
-	for (i = 0; i < 0x40; i++)
-		*(UWORD*)(0x8100 + i) = cat3[i];
+    load_sprite(0x8000, blank16);
+    load_sprite(0x8040, cat0);
+    load_sprite(0x8080, cat1);
+    load_sprite(0x80C0, cat2);
+    load_sprite(0x8100, cat3);
 	
 	// load tile tiles
-	
 	for(i = 0; i < 0x10; i++)
 		*(UWORD*)(0x9000+i) = blank8[i];
 	
@@ -239,7 +235,6 @@ void init_gameplay() {
 		*(UWORD*)(0x9010+i) = faces[i];
 	
 	// clear background tiles
-	
 	clearTiles();
 	
     // background code
@@ -275,6 +270,7 @@ void init_gameplay() {
 void do_gameplay() {
     static UBYTE vblanks = 0;
     UBYTE buttons;
+    UWORD i;
 
     vblanks++;
 
@@ -307,6 +303,7 @@ void do_gameplay() {
 
     if (vblanks > VBLANK_LIMIT) {
         vblanks = 0;
+
         for (i = 0; i < 4; i++) {
             UWORD columnOffset;
 			columnOffset = 3 * i ;
