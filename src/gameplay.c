@@ -10,11 +10,17 @@
 const UWORD COLUMN_SIZE = 0x04; // cats per column
 const UWORD VBLANK_LIMIT = 60;  // number of vblanks until gameplay update
 
+// IDs to identify which cat is falling
+const UBYTE STRIPED_CAT_ID = 0x04;
+const UBYTE BLACK_CAT_ID   = 0x08;
+const UBYTE FALLING_CAT_ID = 0x0C;
+const UBYTE SIAMESE_CAT_ID = 0x10;
+
 UWORD colNum, colX, colY, sprID, tileID, temp, i;
 UWORD buckets[4]; 
 UWORD score[4];
 unsigned char buttons;
-INT8 gen;
+
 fixed seed;
 
 void clearTiles() {
@@ -82,7 +88,7 @@ UWORD setColumn() {
 
 void setBuckets() {
 	switch (sprID) {
-		case(0x04):
+		case(STRIPED_CAT_ID):
 			if (buckets[colNum] == 0x03) {
 				score[colNum] = 0x03;
 			} else {
@@ -91,7 +97,7 @@ void setBuckets() {
 			}
 		break;
 				
-		case(0x08):
+		case(BLACK_CAT_ID):
 			if (buckets[colNum] == 0x04) {
 				score[colNum] = 0x04;
 			} else {
@@ -100,7 +106,7 @@ void setBuckets() {
 			}
 		break;
 				
-		case(0x0C):
+		case(FALLING_CAT_ID):
 			if (buckets[colNum] == 0x02) {
 				score[colNum] = 0x02;
 			} else {
@@ -109,7 +115,7 @@ void setBuckets() {
 			}
 		break;
 				
-		case(0x10):
+		case(SIAMESE_CAT_ID):
 			if (buckets[colNum] == 0x01) {
 				score[colNum] = 0x01;
             } else {
@@ -152,16 +158,16 @@ void moveRows() {
 }
 
 UWORD pickCat() {
-	gen = rand();
+	UINT8 gen = rand();
 	
-	if (gen < -63)
-		return 0x04;
-	if (gen < 0)
-		return 0x08;
-	if (gen < 63)
-		return 0x0C;
-	if (gen < 127)
-		return 0x10;
+	if (gen & 1)
+		return STRIPED_CAT_ID;
+    else if (gen & 4)
+		return BLACK_CAT_ID;
+	else if (gen & 16)
+		return FALLING_CAT_ID;
+    else
+		return SIAMESE_CAT_ID;
 }
 
 void startRow() {	
@@ -199,7 +205,8 @@ void init_gameplay() {
 	BGP_REG = OBP0_REG = OBP1_REG = 0xE4U; 
 	
 	SPRITES_8x16;
-	
+
+    // Initialize random number generator with contents of DIV_REG    
 	seed.b.l = DIV_REG;
 	seed.b.h = DIV_REG;
 	initrand(seed.w);
