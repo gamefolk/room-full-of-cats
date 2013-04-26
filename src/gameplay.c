@@ -8,10 +8,10 @@
 #include "tiles/bgtiles.c"
 
 // IDs to identify which cat is falling
-#define STRIPED_CAT_ID  0x04
-#define BLACK_CAT_ID    0x08
-#define FALLING_CAT_ID  0x0C
-#define SIAMESE_CAT_ID  0x10
+const UBYTE STRIPED_CAT_ID = 0x04;
+const UBYTE BLACK_CAT_ID   = 0x08;
+const UBYTE FALLING_CAT_ID = 0x0C;
+const UBYTE SIAMESE_CAT_ID = 0x10;
 
 const UWORD COLUMN_SIZE  = 0x04; // cats per column
 const UWORD VBLANK_LIMIT = 60;  // number of vblanks until gameplay update
@@ -87,42 +87,34 @@ UWORD setColumn() {
 }*/
 
 void setBuckets() {
-	switch (sprID) {
-		case(STRIPED_CAT_ID):
-			if (buckets[colNum] == 0x03) {
-				score[colNum] = 0x03;
-			} else {
-				buckets[colNum] = 0x03;
-				score[colNum] = 0;
-			}
-		break;
-				
-		case(BLACK_CAT_ID):
-			if (buckets[colNum] == 0x04) {
-				score[colNum] = 0x04;
-			} else {
-				buckets[colNum] = 0x04;
-				score[colNum] = 0;
-			}
-		break;
-				
-		case(FALLING_CAT_ID):
+    if (sprID == STRIPED_CAT_ID) {
+        if (buckets[colNum] == 0x03) {
+            score[colNum] = 0x03;
+        } else {
+            buckets[colNum] = 0x03;
+            score[colNum] = 0;
+        }
+    } else if (sprID == BLACK_CAT_ID) {
+        if (buckets[colNum] == 0x04) {
+            score[colNum] = 0x04;
+        } else {
+            buckets[colNum] = 0x04;
+            score[colNum] = 0;
+        }
+    } else if (sprID == FALLING_CAT_ID) {
 			if (buckets[colNum] == 0x02) {
 				score[colNum] = 0x02;
 			} else {
 				buckets[colNum] = 0x02;
 				score[colNum] = 0;
 			}
-		break;
-				
-		case(SIAMESE_CAT_ID):
-			if (buckets[colNum] == 0x01) {
-				score[colNum] = 0x01;
-            } else {
-				buckets[colNum] = 0x01;
-				score[colNum] = 0;
-			}
-		break;
+    } else if (sprID == SIAMESE_CAT_ID) {
+        if (buckets[colNum] == 0x01) {
+            score[colNum] = 0x01;
+        } else {
+            buckets[colNum] = 0x01;
+            score[colNum] = 0;
+        }
 	}
 }
 
