@@ -16,7 +16,7 @@ const UBYTE SIAMESE_CAT_ID = 0x10;
 const UWORD COLUMN_SIZE  = 0x04; // cats per column
 const UWORD VBLANK_LIMIT = 60;  // number of vblanks until gameplay update
 
-UWORD colNum, colX, colY, sprID, tileID;
+UWORD colX, colY, sprID, tileID;
 UWORD buckets[4]; 
 UWORD score[4];
 
@@ -29,7 +29,7 @@ void clearTiles() {
 	}
 }
 
-void makeColumn() {
+void makeColumn(UWORD colNum) {
 	UWORD cur, y, x;
 	
 	cur = 0xC000;
@@ -54,7 +54,7 @@ void makeColumn() {
 	}
 }
 
-UWORD setColumn() {
+UWORD setColumn(UWORD colNum) {
 	UWORD cur, last;
 
 	cur = 0xC002;
@@ -86,7 +86,7 @@ UWORD setColumn() {
 	lastTarget = cur;
 }*/
 
-void setBuckets() {
+void setBuckets(UWORD colNum) {
     if (sprID == STRIPED_CAT_ID) {
         if (buckets[colNum] == 0x03) {
             score[colNum] = 0x03;
@@ -120,18 +120,18 @@ void setBuckets() {
 
 void moveRow() {	
 	UWORD startY;
+    UWORD colNum;	
 	
 	startY = colY;
-	
 	for (colNum = 0x00; colNum < 0x03; colNum++) {
 		sprID = 0x00;
-		sprID = setColumn();
+		sprID = setColumn(colNum);
 		
 		if (colY < 0x03) {
 			colY += 0x01;
-			setColumn();
+			setColumn(colNum);
 		} else {
-			setBuckets();
+			setBuckets(colNum);
 		}
 		
 		colY = startY;
@@ -163,29 +163,13 @@ UWORD pickCat() {
 }
 
 void startRow() {	
-	colNum = 0x00;
-	colY = 0x00;
-	sprID = pickCat();
-	
-	setColumn();
-	
-	colNum = 0x01;
-	colY = 0x00;
-	sprID = pickCat();
-	
-	setColumn();
-	
-	colNum = 0x02;
-	colY = 0x00;
-	sprID = pickCat();
-	
-	setColumn();
-	
-	/*colNum = 0x03;
-	colY = 0x00;
-	sprID = pickCat();
-	
-	setColumn();*/
+    UWORD colNum;
+    const UWORD NUM_COLS = 0x03;
+    for(colNum = 0; colNum < NUM_COLS; colNum++) {
+        colY = 0x00;
+        sprID = pickCat();
+        setColumn(colNum);
+    }
 }
 
 void load_sprite(UWORD mem_offset, UBYTE* sprite) {
@@ -244,12 +228,10 @@ void init_gameplay() {
 	
 	// set up columns
 	
-	colNum = 0x00;
 	colX = 0x2B;
 	
 	for (i = 0; i < 3; i++) {
-		makeColumn();
-		colNum++;
+		makeColumn(i);
 		colX += 0x18;
 	}
 	
@@ -265,6 +247,7 @@ void do_gameplay() {
     static UBYTE vblanks = 0;
     UBYTE buttons;
     UWORD i;
+    UWORD colNum = 0x00;
 
     vblanks++;
 
@@ -275,7 +258,7 @@ void do_gameplay() {
             colY = 0x02;
             sprID = 0x00;
 
-            setColumn();
+            setColumn(colNum);
         break;
         
         case(J_DOWN):
@@ -283,7 +266,7 @@ void do_gameplay() {
             colY = 0x02;
             sprID = 0x00;
 
-            setColumn();
+            setColumn(colNum);
         break;
         
         case(J_RIGHT):
@@ -291,7 +274,7 @@ void do_gameplay() {
             colY = 0x02;
             sprID = 0x00;
 
-            setColumn();
+            setColumn(colNum);
         break;
     }
 
