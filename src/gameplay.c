@@ -38,17 +38,17 @@ void makeColumn() {
 	for (y = 0x20; y < (0x20 + ((UBYTE)COLUMN_SIZE * 0x10)); y += 0x14) {
 		x = colX;
 		
-		*(unsigned char*)(cur) = y;
-		*(unsigned char*)(cur + 0x01) = x;
-		*(unsigned char*)(cur + 0x02) = 0x00;
-		*(unsigned char*)(cur + 0x03) = 0x00;
+		*(UBYTE*)(cur) = y;
+		*(UBYTE*)(cur + 0x01) = x;
+		*(UBYTE*)(cur + 0x02) = 0x00;
+		*(UBYTE*)(cur + 0x03) = 0x00;
 	
 		x += 0x08;
 	
-		*(unsigned char*)(cur + 0x04) = y;
-		*(unsigned char*)(cur + 0x05) = x;
-		*(unsigned char*)(cur + 0x06) = 0x02;
-		*(unsigned char*)(cur + 0x07) = 0x00;
+		*(UBYTE*)(cur + 0x04) = y;
+		*(UBYTE*)(cur + 0x05) = x;
+		*(UBYTE*)(cur + 0x06) = 0x02;
+		*(UBYTE*)(cur + 0x07) = 0x00;
 		
 		cur += 0x08;
 	}
@@ -61,10 +61,10 @@ UWORD setColumn() {
 	cur += colNum * (COLUMN_SIZE * 0x08);
 	cur += colY * 0x08;
 	
-	last = *(unsigned char*)(cur);
+	last = *(UBYTE*)(cur);
 	
-	*(unsigned char*)(cur) = sprID;
-	*(unsigned char*)(cur + 0x04) = sprID + 0x02;
+	*(UBYTE*)(cur) = sprID;
+	*(UBYTE*)(cur + 0x04) = sprID + 0x02;
 	
 	return last;
 }
@@ -73,15 +73,15 @@ UWORD setColumn() {
 {
 	UWORD cur;
 	
-	*(unsigned char*)(lastTarget) = 0x00;
-	*(unsigned char*)(lastTarget + 0x04) = 0x00;
+	*(UBYTE*)(lastTarget) = 0x00;
+	*(UBYTE*)(lastTarget + 0x04) = 0x00;
 
 	cur = 0xC003;
 	cur += colNum * (COLUMNSIZE * 0x08);
 	cur += colY * 0x08;
 		
-	*(unsigned char*)(cur) = 0x20;
-	*(unsigned char*)(cur + 0x04) = 0x20;
+	*(UBYTE*)(cur) = 0x20;
+	*(UBYTE*)(cur + 0x04) = 0x20;
 	
 	lastTarget = cur;
 }*/
@@ -188,9 +188,11 @@ void startRow() {
 	setColumn();*/
 }
 
-void load_sprite(UWORD mem_offset, char* sprite) {
-   UWORD i;
-   for(i = 0; i < 0x40; i++) {
+void load_sprite(UWORD mem_offset, UBYTE* sprite) {
+    const UWORD sprite_offset = 0x40; 
+    UWORD i;
+   
+   for(i = 0; i < sprite_offset; i++) {
        *(UWORD*)(mem_offset + i) = sprite[i];
    }
 }
