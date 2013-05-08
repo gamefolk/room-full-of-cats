@@ -9,21 +9,9 @@
 #include "tiles/background.c"
 #include "tiles/bgtiles.c"
 
-// IDs to identify which cat is falling
-const UBYTE STRIPED_CAT_ID = 0x04;
-const UBYTE BLACK_CAT_ID   = 0x08;
-const UBYTE FALLING_CAT_ID = 0x0C;
-const UBYTE SIAMESE_CAT_ID = 0x10;
-
-const UWORD VBLANK_LIMIT = 60;      // number of vblanks until gameplay update
-
-// Number of rows of cats
+// Rows and columns in the cat table
 #define NUM_ROWS 0x04
-
-// Number of columns of cats
 #define NUM_COLS 0x03
-
-#define NUM_CATS 0x04
 
 // Locations of sprites in memory
 #define BLANK_SPRITE_MEMORY 0x00
@@ -36,18 +24,10 @@ const UWORD VBLANK_LIMIT = 60;      // number of vblanks until gameplay update
 #define BLANK_TILE_MEMORY 0x14
 #define CAT_FACE_MEMORY   0x18
 
-/*
- * Numbers to identify sprite locations. Must be multiples of 2 to facilitate
- * 16x16 sprites
- */
-#define BLANK_SPRITE_ID 0
-#define STRIPED_CAT_ID  2
-#define BLACK_CAT_ID    4
-#define FALLING_CAT_ID  6
-#define SIAMESE_CAT_ID  8
-
+// The number of tiles that makes up one sprite
 #define TILES_IN_SPRITE 4
 
+// Number of pixels that define graphics
 #define GRID_START_X    32
 #define GRID_START_Y    32
 #define COLUMN_SPACING  8
@@ -55,10 +35,13 @@ const UWORD VBLANK_LIMIT = 60;      // number of vblanks until gameplay update
 #define CAT_WIDTH       16
 #define CAT_HEIGHT      16
 
-UBYTE striped_id, black_id, falling_id, siamese_id;
-UBYTE blank16_id, blank8_id, faces_id;
+// Function prototypes
+void set_sprite_tile_16(UBYTE, UBYTE);
+void assign_new_cat(UBYTE);
+void move_sprite_16(UBYTE nb, UBYTE x, UBYTE y);
 
-UBYTE cat_ids [NUM_CATS];
+// Number of vblanks until gameplay update
+const UWORD VBLANK_LIMIT = 60;
 
 // An array to hold all of the sprite IDsa
 UWORD cat_table [NUM_ROWS][NUM_COLS];
@@ -70,11 +53,6 @@ UWORD score[4];
 fixed seed;
 
 BOOLEAN need_new_cats = FALSE;
-
-// Function prototypes
-void set_sprite_tile_16(UBYTE, UBYTE);
-void assign_new_cat(UBYTE);
-void move_sprite_16(UBYTE nb, UBYTE x, UBYTE y);
 
 void blank(UBYTE sprite_id) {
     set_sprite_tile_16(sprite_id, BLANK_SPRITE_MEMORY);
@@ -144,6 +122,7 @@ void render() {
     // TODO: Redraw the buckets and score
 }
 
+/*
 void setBuckets(UWORD colNum, UWORD sprID) {
     if (sprID == STRIPED_CAT_ID) {
         if (buckets[colNum] == 0x03) {
@@ -174,7 +153,7 @@ void setBuckets(UWORD colNum, UWORD sprID) {
             score[colNum] = 0;
         }
     }
-}
+}*/
 
 /*
  * Shifts the rows of the cat table down by one, and assigns the bottom row to
@@ -263,8 +242,8 @@ void init_gameplay() {
     set_sprite_data(SIAMESE_CAT_MEMORY, sizeof(cat3) / TILES_IN_SPRITE, cat3);
 
     // Load tiles into VRAM
-    blank8_id = load_sprite(BLANK_TILE_MEMORY, sizeof(blank8), blank8);
-    faces_id = load_sprite(CAT_FACE_MEMORY, sizeof(faces), faces);
+    set_sprite_data(BLANK_TILE_MEMORY, sizeof(blank8) / 4, blank8);
+    set_sprite_data(CAT_FACE_MEMORY, sizeof(faces) / 4, faces);
     
     // Initialize all sprites and assign their ids to the table 
     init_cat_table();
