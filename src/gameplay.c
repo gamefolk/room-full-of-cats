@@ -1,6 +1,5 @@
 #include <gb/gb.h>
 #include <rand.h>
-#include <string.h>
 #include <stdio.h>
 
 #include "tiles/fallcats.c"
@@ -10,8 +9,8 @@
 #include "tiles/bgtiles.c"
 
 // Rows and columns in the cat table
-#define NUM_ROWS 0x04
-#define NUM_COLS 0x03
+#define NUM_ROWS 4
+#define NUM_COLS 3
 
 // Locations of sprites in memory
 #define BLANK_SPRITE_MEMORY 0x00
@@ -46,9 +45,12 @@ const UWORD VBLANK_LIMIT = 60;
 // An array to hold all of the sprite IDsa
 UWORD cat_table [NUM_ROWS][NUM_COLS];
 
-UWORD tileID;
-UWORD buckets[4];
-UWORD score[4];
+struct bucket_entry {
+    UBYTE cat_mem;
+    UBYTE num_cats;
+}
+
+struct bucket_entry buckets[4];
 
 fixed seed;
 
@@ -59,27 +61,20 @@ void blank(UBYTE sprite_id) {
 }
 
 void init_cat_table() {
-    UBYTE i, j;
+    int i, j;
 
-    UBYTE sprite_id = 0;
+    UBYTE sprite_id = 0x0;
     for(i = 0; i < NUM_ROWS; i++) {
         for(j = 0; j < NUM_COLS; j++) {
             blank(sprite_id);
             cat_table[i][j] = sprite_id;
-            sprite_id += 2;
+            sprite_id += 0x2;
         }
     }
 }
 
-void clearTiles() {
-    UWORD i;
-    for (i = 0; i < 0x400; i++) {
-        *(UWORD*)(0x9800 + i) = 0x00;
-    }
-}
-
 void assign_new_cat(UBYTE sprite_id) {
-    UINT8 gen = rand();
+    INT8 gen = rand();
 
     // Choose a cat at random.
     if (gen & 1) {
@@ -94,7 +89,8 @@ void assign_new_cat(UBYTE sprite_id) {
 }
 
 void render() {
-    UBYTE i, j, x, y;
+    UBYTE x, y;
+    int i, j;
 
     disable_interrupts();
 
@@ -119,49 +115,23 @@ void render() {
         }
     }
 
+//    // Redraw the buckets
+////    for (i = 0; i < NUM_COLS; i++) {
+//        struct bucket_entry entry = buckets[i];
+//    }
+
     // TODO: Redraw the buckets and score
 }
-
-/*
-void setBuckets(UWORD colNum, UWORD sprID) {
-    if (sprID == STRIPED_CAT_ID) {
-        if (buckets[colNum] == 0x03) {
-            score[colNum] = 0x03;
-        } else {
-            buckets[colNum] = 0x03;
-            score[colNum] = 0;
-        }
-    } else if (sprID == BLACK_CAT_ID) {
-        if (buckets[colNum] == 0x04) {
-            score[colNum] = 0x04;
-        } else {
-            buckets[colNum] = 0x04;
-            score[colNum] = 0;
-        }
-    } else if (sprID == FALLING_CAT_ID) {
-            if (buckets[colNum] == 0x02) {
-                score[colNum] = 0x02;
-            } else {
-                buckets[colNum] = 0x02;
-                score[colNum] = 0;
-            }
-    } else if (sprID == SIAMESE_CAT_ID) {
-        if (buckets[colNum] == 0x01) {
-            score[colNum] = 0x01;
-        } else {
-            buckets[colNum] = 0x01;
-            score[colNum] = 0;
-        }
-    }
-}*/
 
 /*
  * Shifts the rows of the cat table down by one, and assigns the bottom row to
  * the top row.
  */
 void update_cats() {
-    UBYTE tmp [NUM_COLS], i,j;
+    UBYTE tmp [NUM_COLS];
+    int i, j;
     
+    // Update the cat table
     for(j = 0; j < NUM_COLS; j++) {
         tmp[j] = cat_table[NUM_ROWS - 1][j];
     }
@@ -178,7 +148,30 @@ void update_cats() {
 
     need_new_cats = TRUE;
 
-    // TODO: Update buckets
+/*
+    // Update the buckets
+    for(i = 0; i < NUM_COLS; i++) {
+        UBYTE fallen_cat = get_sprite_tile(tmp[i]);
+        struct bucket_entry *bucket = &buckets[i];
+
+
+        // Make sure that the fallen cat matches the bucket
+        if (fallen_cat == BLANK_SPRITE_MEMORY) {
+            // Do nothing
+        } else if (fallen_cat == bucket->cat_mem) {
+            if (bucket->num_cats < 3) {
+                bucket->num_cats++;
+            } else {
+                bucket->num_cats = 0;
+
+                // TODO: Increase score
+            }
+        } else {
+            // Wrong cat type. Empty the bucket
+            bucket->num_cats = 1;
+            bucket->cat_mem = fallen_cat;
+        }
+    }*/
 }
 
 /*
@@ -242,8 +235,8 @@ void init_gameplay() {
     set_sprite_data(SIAMESE_CAT_MEMORY, sizeof(cat3) / TILES_IN_SPRITE, cat3);
 
     // Load tiles into VRAM
-    set_sprite_data(BLANK_TILE_MEMORY, sizeof(blank8) / 4, blank8);
-    set_sprite_data(CAT_FACE_MEMORY, sizeof(faces) / 4, faces);
+//    set_sprite_data(BLANK_TILE_MEMORY, sizeof(blank8) / 4, blank8);
+//    set_sprite_data(CAT_FACE_MEMORY, sizeof(faces) / 4, faces);
     
     // Initialize all sprites and assign their ids to the table 
     init_cat_table();
