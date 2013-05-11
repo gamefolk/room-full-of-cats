@@ -8,7 +8,7 @@
 #include "tiles/background.c"
 #include "tiles/bgtiles.c"
 
-// Rows and columns in the cat table
+// Rows and columns in the cat grid
 #define NUM_ROWS 4
 #define NUM_COLS 3
 
@@ -19,61 +19,75 @@
 #define FALLING_CAT_MEMORY  0x0C
 #define SIAMESE_CAT_MEMORY  0x10
 
-// Locations of background tiles in memory
-#define CAT_FACE_MEMORY   0x00
-
-// The number of tiles that makes up one sprite
-#define TILES_IN_SPRITE 4
-
-// Number of pixels that define graphics
-#define GRID_START_X    32
-#define GRID_START_Y    32
-#define COLUMN_SPACING  8
-#define ROW_SPACING     8
-#define CAT_WIDTH       16
-#define CAT_HEIGHT      16
-
-#define TILE_WIDTH  8
-#define TILE_HEIGHT 8
-
-#define BUCKET_START_X 32
-#define BUCKET_START_Y 112
-#define BUCKET_WIDTH   16
-#define BUCKET_HEIGHT  16
-
+// Locations of the bucket cats in tile memory
 #define BLANK_TILE       0x01
 #define STRIPED_CAT_TILE 0x06
 #define BLACK_CAT_TILE   0x07
 #define SIAMESE_CAT_TILE 0x04
 #define FALLING_CAT_TILE 0x05
 
+// Locations of background tiles in memory
+#define CAT_FACE_MEMORY   0x04
+
+// The number of tiles that makes up one sprite
+#define TILES_IN_SPRITE 4
+
+// Dimensions and locations of the cat grid
+#define GRID_START_X   32
+#define GRID_START_Y   32
+#define COLUMN_SPACING 8
+#define ROW_SPACING    8
+#define BUCKET_START_X 32
+#define BUCKET_START_Y 120
+#define BUCKET_WIDTH   16
+#define BUCKET_HEIGHT  16
+
+// Dimensions of a cat sprite in pixels
+#define CAT_WIDTH  16
+#define CAT_HEIGHT 16
+
+// Dimensions of a tile in pixels
+#define TILE_WIDTH  8
+#define TILE_HEIGHT 8
+
+// Time until a gameplay update in vblanks
+#define TIME_UNTIL_UPDATE 60
+
+// Time until the joypad should be updated in vblanks
+#define TIME_UNTIL_INPUT  10
 
 // Function prototypes
-void set_sprite_tile_16(UBYTE, UBYTE);
-void assign_new_cat(UBYTE);
-void move_sprite_16(UBYTE nb, UBYTE x, UBYTE y);
-
-// Number of vblanks until gameplay update
-const UWORD VBLANK_LIMIT = 60;
+void set_sprite_tile_16(UBYTE number, UBYTE tile);
+void assign_new_cat(UBYTE sprite_id);
+void move_sprite_16(UBYTE number, UBYTE x, UBYTE y);
 
 // An array to hold all of the sprite IDsa
-UWORD cat_table [NUM_ROWS][NUM_COLS];
+UBYTE cat_table [NUM_ROWS][NUM_COLS];
 
+// Struct to hold bucket information
 struct bucket_entry {
     UBYTE cat_mem;
     UBYTE num_cats;
 }
 
+// The buckets to catch cats in
 struct bucket_entry buckets[NUM_COLS];
 
+// The random number generator seed
 fixed seed;
 
 BOOLEAN need_new_cats = TRUE, cats_changed = TRUE;
 
+/*
+ * Convenience method to assign a blank sprite to an arbitrary sprite
+ */
 void blank(UBYTE sprite_id) {
     set_sprite_tile_16(sprite_id, BLANK_SPRITE_MEMORY);
 }
 
+/*
+ * Assigns sprite IDs to every entry in the cat table
+ */
 void init_cat_table() {
     BYTE i, j;
 
@@ -87,6 +101,9 @@ void init_cat_table() {
     }
 }
 
+/*
+ * Initializes the bucket array with empty sprites and no cats
+ */
 void init_buckets() {
     BYTE i;
 
@@ -96,7 +113,11 @@ void init_buckets() {
     }
 }
 
+/*
+ * Randomly assigns a different set of cat tiles to a given sprite ID
+ */
 void assign_new_cat(UBYTE sprite_id) {
+    // TODO: Make this more random
     INT8 gen = rand();
 
     // Choose a cat at random.
@@ -111,6 +132,9 @@ void assign_new_cat(UBYTE sprite_id) {
     }
 }
 
+/*
+ * Erases a rectangular area of the tile map
+ */
 void clear(UBYTE x, UBYTE y, UBYTE w, UBYTE h) {
     UBYTE i, j;
     UBYTE tile = BLANK_TILE;
@@ -122,12 +146,34 @@ void clear(UBYTE x, UBYTE y, UBYTE w, UBYTE h) {
     }
 }
 
+/*
+ * Changes the tiles associated with the bottom cat of a given column to be
+ * blank. If the entire column is blank, does nothing.
+ */
+void remove_bottom_cat(UBYTE column) {
+    UBYTE cat, i;
+
+    for(i = NUM_ROWS - 1; i >= 0; i--) {
+        cat = get_sprite_tile(cat_table[i][column]);
+        if (BLANK_SPRITE_MEMORY != cat) {
+            blank(cat_table[i][column]);
+            cats_changed = TRUE;
+            return;
+        }
+    }
+}
+
+/*
+ * Redraws the entire screen based on the current game state. Should only be
+ * called during the vblank to ensure that there are no graphical errors.
+ */
 void render() {
     UBYTE x, y, x_offset, y_offset, cats_to_draw, cat_type, cat, tile;
     BYTE i, j;
 
     disable_interrupts();
 
+    // Don't render if we don't have to
     if (!cats_changed) {
         return;
     }
@@ -159,20 +205,24 @@ void render() {
         cats_to_draw = entry->num_cats;
         cat_type = entry->cat_mem;
 
+        // Find the top left corner of the bucket in the tile map
         x = (BUCKET_START_X + i * (COLUMN_SPACING + BUCKET_WIDTH)) / TILE_WIDTH - 1;
-        y = (BUCKET_START_Y + ROW_SPACING) / TILE_HEIGHT - 1;
+        y = BUCKET_START_Y / TILE_HEIGHT - 1;
 
         // Blank out the current bucket
         tile = BLANK_TILE;
         set_bkg_tiles(x, y, BUCKET_WIDTH / TILE_WIDTH,
                             BUCKET_HEIGHT / TILE_HEIGHT, &tile);
 
+        // Erase any tiles currently in the bucket
         clear(x, y, BUCKET_WIDTH / TILE_WIDTH, BUCKET_HEIGHT / TILE_HEIGHT);
 
+        // Draw the cats into the bucket
         for (cat = 0; cat < cats_to_draw; cat++) {
             x_offset = cat % 2;
             y_offset = cat / 2;
 
+            // Select the appropriate tile for the cat
             if (cat_type == STRIPED_CAT_MEMORY) {
                 tile = STRIPED_CAT_TILE;
             } else if(cat_type == BLACK_CAT_MEMORY) {
@@ -183,14 +233,15 @@ void render() {
                 tile = FALLING_CAT_TILE;
             }
 
+            // Draw the cat into tile background memory
             set_bkg_tiles(x + x_offset, y + y_offset, 1, 1, &tile);
-//            printf("drawing cat.\n");
         }
     }
 
     // TODO: Draw score
     
     cats_changed = FALSE;
+    enable_interrupts();
 }
 
 /*
@@ -248,36 +299,42 @@ void update_cats() {
 /*
  * Wrapper to treat two 8x16 sprites as a 16x16 sprite
  */
-void set_sprite_tile_16(UBYTE nb, UBYTE tile) {
+void set_sprite_tile_16(UBYTE number, UBYTE tile) {
     const UBYTE TILE_OFFSET = 2;
-    set_sprite_tile(nb, tile);
-    set_sprite_tile(nb + 1, tile + TILE_OFFSET);
+    set_sprite_tile(number, tile);
+    set_sprite_tile(number + 1, tile + TILE_OFFSET);
 }
 
 /*
  * Wrapper to treat two 8x16 sprites as a 16x16 sprite
  */
-void move_sprite_16(UBYTE nb, UBYTE x, UBYTE y) {
+void move_sprite_16(UBYTE number, UBYTE x, UBYTE y) {
     const UBYTE X_OFFSET = 0x08;
-    move_sprite(nb, x, y);
-    move_sprite(nb + 1, x + X_OFFSET, y);
+    move_sprite(number, x, y);
+    move_sprite(number + 1, x + X_OFFSET, y);
 }
 
+/*
+ * Takes care of overhead necessary to begin play. This function will
+ * - Initialize registers
+ * - Load sprites and tiles into memory
+ * - Initialize the game state
+ * - Set the appropriate sprite mode (8x16)
+ * - Register the vblank handler
+ * - Turn on the display
+ */
 void init_gameplay() {
-    DISPLAY_OFF;
-    
     LCDC_REG = 0x01;
     BGP_REG = OBP0_REG = OBP1_REG = 0xE4U;
     
-    SPRITES_8x16;
-
+    wait_vbl_done();
+    DISPLAY_OFF;
+    
     // Initialize random number generator with contents of DIV_REG
     seed.b.l = DIV_REG;
     seed.b.h = DIV_REG;
     initrand(seed.w);
     
-    // TODO: Load background into VRAM
-   
     // Load sprites into VRAM
     set_sprite_data(BLANK_SPRITE_MEMORY, sizeof(blank16) / TILES_IN_SPRITE, blank16);
     set_sprite_data(STRIPED_CAT_MEMORY,  sizeof(cat0)    / TILES_IN_SPRITE, cat0);
@@ -285,46 +342,68 @@ void init_gameplay() {
     set_sprite_data(FALLING_CAT_MEMORY,  sizeof(cat2)    / TILES_IN_SPRITE, cat2);
     set_sprite_data(SIAMESE_CAT_MEMORY,  sizeof(cat3)    / TILES_IN_SPRITE, cat3);
 
-    // Load tiles into VRAM
-    set_bkg_data(0x04, 4, faces);
+    SPRITES_8x16;
+    SHOW_SPRITES;
     
-    // Initialize all sprites and assign their ids to the table 
+    // Load tiles into VRAM
+    set_bkg_data(CAT_FACE_MEMORY, 4, faces);
+    
+    // TODO: Load background into VRAM
+    SHOW_BKG;
+
+    // We don't use the window tile memory
+    HIDE_WIN;
+    
+   
+    // Initialize game state
     init_cat_table();
     init_buckets();
     update_cats();
 
-    SHOW_SPRITES;
-
-    DISPLAY_ON;
-
     add_VBL(render);
+
+    wait_vbl_done();
+    
+    DISPLAY_ON;
 }
 
 void do_gameplay() {
-    static UBYTE vblanks = 0;
+    static UBYTE vblanks_since_input = 0;
+    static UBYTE vblanks_since_update = 0;
 
-    static UWORD column_to_remove = 0, colY = 0x02;
-    UBYTE buttons;
+    UBYTE buttons, column;
 
-    vblanks++;
+    BOOLEAN should_remove_column = FALSE;
 
     buttons = joypad();
+
+    // TODO: delay between button presses
     switch(buttons) {
         case(J_LEFT):
-            column_to_remove = 0x00;
+            column = 0;
+            should_remove_column = TRUE;
         break;
         
         case(J_DOWN):
-            column_to_remove = 0x01;
+            column = 1;
+            should_remove_column = TRUE;
         break;
         
         case(J_RIGHT):
-            column_to_remove = 0x02;
+            column = 2;
+            should_remove_column = TRUE;
         break;
     }
 
-    if (vblanks > VBLANK_LIMIT) {
-        vblanks = 0;
-        update_cats();
+    if(should_remove_column) {
+        remove_bottom_cat(column);
     }
+
+    if (vblanks_since_update > TIME_UNTIL_UPDATE) {
+        update_cats();
+        vblanks_since_update = 0;
+    }
+
+    vblanks_since_input++;
+    vblanks_since_update++;
 }
