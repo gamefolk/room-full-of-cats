@@ -19,9 +19,8 @@
 #define FALLING_CAT_MEMORY  0x0C
 #define SIAMESE_CAT_MEMORY  0x10
 
-// Locations of tiles in memory
-#define BLANK_TILE_MEMORY 0x14
-#define CAT_FACE_MEMORY   0x18
+// Locations of background tiles in memory
+#define CAT_FACE_MEMORY   0x00
 
 // The number of tiles that makes up one sprite
 #define TILES_IN_SPRITE 4
@@ -33,6 +32,21 @@
 #define ROW_SPACING     8
 #define CAT_WIDTH       16
 #define CAT_HEIGHT      16
+
+#define TILE_WIDTH  8
+#define TILE_HEIGHT 8
+
+#define BUCKET_START_X 32
+#define BUCKET_START_Y 112
+#define BUCKET_WIDTH   16
+#define BUCKET_HEIGHT  16
+
+#define BLANK_TILE       0x01
+#define STRIPED_CAT_TILE 0x06
+#define BLACK_CAT_TILE   0x07
+#define SIAMESE_CAT_TILE 0x04
+#define FALLING_CAT_TILE 0x05
+
 
 // Function prototypes
 void set_sprite_tile_16(UBYTE, UBYTE);
@@ -50,18 +64,18 @@ struct bucket_entry {
     UBYTE num_cats;
 }
 
-struct bucket_entry buckets[4];
+struct bucket_entry buckets[NUM_COLS];
 
 fixed seed;
 
-BOOLEAN need_new_cats = FALSE;
+BOOLEAN need_new_cats = TRUE, cats_changed = TRUE;
 
 void blank(UBYTE sprite_id) {
     set_sprite_tile_16(sprite_id, BLANK_SPRITE_MEMORY);
 }
 
 void init_cat_table() {
-    int i, j;
+    BYTE i, j;
 
     UBYTE sprite_id = 0x0;
     for(i = 0; i < NUM_ROWS; i++) {
@@ -70,6 +84,15 @@ void init_cat_table() {
             cat_table[i][j] = sprite_id;
             sprite_id += 0x2;
         }
+    }
+}
+
+void init_buckets() {
+    BYTE i;
+
+    for(i = 0; i < NUM_COLS; i++) {
+        buckets[i].cat_mem = BLANK_SPRITE_MEMORY;
+        buckets[i].num_cats = 0;
     }
 }
 
@@ -88,11 +111,26 @@ void assign_new_cat(UBYTE sprite_id) {
     }
 }
 
+void clear(UBYTE x, UBYTE y, UBYTE w, UBYTE h) {
+    UBYTE i, j;
+    UBYTE tile = BLANK_TILE;
+
+    for (i = 0; i < h; i++) {
+        for (j = 0; j < w; j++) {
+            set_bkg_tiles(x + i, y + j, 1, 1, &tile);
+        }
+    }
+}
+
 void render() {
-    UBYTE x, y;
-    int i, j;
+    UBYTE x, y, x_offset, y_offset, cats_to_draw, cat_type, cat, tile;
+    BYTE i, j;
 
     disable_interrupts();
+
+    if (!cats_changed) {
+        return;
+    }
 
     /*
      * Give the sprites at the top of the cat table a new sprite if they've
@@ -106,7 +144,7 @@ void render() {
         need_new_cats = FALSE;
     }
    
-    // Redraw every sprite in the cat table 
+    // Redraw every sprite in the cat table
     for (i = 0; i < NUM_ROWS; i++) {
         y = GRID_START_Y + i * (ROW_SPACING + CAT_HEIGHT);
         for (j = 0; j < NUM_COLS; j++) {
@@ -115,12 +153,44 @@ void render() {
         }
     }
 
-//    // Redraw the buckets
-////    for (i = 0; i < NUM_COLS; i++) {
-//        struct bucket_entry entry = buckets[i];
-//    }
+    // Redraw the buckets
+    for (i = 0; i < NUM_COLS; i++) {
+        struct bucket_entry *entry = &buckets[i];
+        cats_to_draw = entry->num_cats;
+        cat_type = entry->cat_mem;
 
-    // TODO: Redraw the buckets and score
+        x = (BUCKET_START_X + i * (COLUMN_SPACING + BUCKET_WIDTH)) / TILE_WIDTH - 1;
+        y = (BUCKET_START_Y + ROW_SPACING) / TILE_HEIGHT - 1;
+
+        // Blank out the current bucket
+        tile = BLANK_TILE;
+        set_bkg_tiles(x, y, BUCKET_WIDTH / TILE_WIDTH,
+                            BUCKET_HEIGHT / TILE_HEIGHT, &tile);
+
+        clear(x, y, BUCKET_WIDTH / TILE_WIDTH, BUCKET_HEIGHT / TILE_HEIGHT);
+
+        for (cat = 0; cat < cats_to_draw; cat++) {
+            x_offset = cat % 2;
+            y_offset = cat / 2;
+
+            if (cat_type == STRIPED_CAT_MEMORY) {
+                tile = STRIPED_CAT_TILE;
+            } else if(cat_type == BLACK_CAT_MEMORY) {
+                tile = BLACK_CAT_TILE;
+            } else if (cat_type == SIAMESE_CAT_MEMORY) {
+                tile = SIAMESE_CAT_TILE;
+            } else if (cat_type == FALLING_CAT_MEMORY) {
+                tile = FALLING_CAT_TILE;
+            }
+
+            set_bkg_tiles(x + x_offset, y + y_offset, 1, 1, &tile);
+//            printf("drawing cat.\n");
+        }
+    }
+
+    // TODO: Draw score
+    
+    cats_changed = FALSE;
 }
 
 /*
@@ -129,7 +199,7 @@ void render() {
  */
 void update_cats() {
     UBYTE tmp [NUM_COLS];
-    int i, j;
+    BYTE i, j;
     
     // Update the cat table
     for(j = 0; j < NUM_COLS; j++) {
@@ -148,7 +218,6 @@ void update_cats() {
 
     need_new_cats = TRUE;
 
-/*
     // Update the buckets
     for(i = 0; i < NUM_COLS; i++) {
         UBYTE fallen_cat = get_sprite_tile(tmp[i]);
@@ -171,7 +240,9 @@ void update_cats() {
             bucket->num_cats = 1;
             bucket->cat_mem = fallen_cat;
         }
-    }*/
+    }
+
+    cats_changed = TRUE;
 }
 
 /*
@@ -192,26 +263,6 @@ void move_sprite_16(UBYTE nb, UBYTE x, UBYTE y) {
     move_sprite(nb + 1, x + X_OFFSET, y);
 }
 
-/*
- * Helper function to assist in loading sprites. Returns the sprite id
- * after returning the sprite
- */
-UBYTE load_sprite(UBYTE vram_location, size_t sprite_size, UBYTE* tiles) {
-    const UBYTE TILE_OFFSET = 2;
-    const UBYTE BYTES_IN_TILE = 16;
-    static UBYTE new_id = 0;
-
-    UBYTE sprite_id, num_tiles;
-    
-    num_tiles = sprite_size / 16;
-    set_sprite_data(vram_location, num_tiles, tiles);
-    set_sprite_tile_16(new_id, vram_location);
-    sprite_id = new_id;
-    new_id += TILE_OFFSET;
-    return sprite_id;
-}
-
-
 void init_gameplay() {
     DISPLAY_OFF;
     
@@ -229,18 +280,17 @@ void init_gameplay() {
    
     // Load sprites into VRAM
     set_sprite_data(BLANK_SPRITE_MEMORY, sizeof(blank16) / TILES_IN_SPRITE, blank16);
-    set_sprite_data(STRIPED_CAT_MEMORY, sizeof(cat0) / TILES_IN_SPRITE, cat0);
-    set_sprite_data(BLACK_CAT_MEMORY, sizeof(cat1) / TILES_IN_SPRITE, cat1);
-    set_sprite_data(FALLING_CAT_MEMORY, sizeof(cat2) / TILES_IN_SPRITE, cat2);
-    set_sprite_data(SIAMESE_CAT_MEMORY, sizeof(cat3) / TILES_IN_SPRITE, cat3);
+    set_sprite_data(STRIPED_CAT_MEMORY,  sizeof(cat0)    / TILES_IN_SPRITE, cat0);
+    set_sprite_data(BLACK_CAT_MEMORY,    sizeof(cat1)    / TILES_IN_SPRITE, cat1);
+    set_sprite_data(FALLING_CAT_MEMORY,  sizeof(cat2)    / TILES_IN_SPRITE, cat2);
+    set_sprite_data(SIAMESE_CAT_MEMORY,  sizeof(cat3)    / TILES_IN_SPRITE, cat3);
 
     // Load tiles into VRAM
-//    set_sprite_data(BLANK_TILE_MEMORY, sizeof(blank8) / 4, blank8);
-//    set_sprite_data(CAT_FACE_MEMORY, sizeof(faces) / 4, faces);
+    set_bkg_data(0x04, 4, faces);
     
     // Initialize all sprites and assign their ids to the table 
     init_cat_table();
-    need_new_cats = TRUE;
+    init_buckets();
     update_cats();
 
     SHOW_SPRITES;
