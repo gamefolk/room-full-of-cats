@@ -172,15 +172,6 @@ void startRow() {
     }
 }
 
-void load_sprite(UWORD mem_offset, UBYTE* sprite) {
-    const UWORD sprite_offset = 0x40; 
-    UWORD i;
-   
-   for(i = 0; i < sprite_offset; i++) {
-       *(UWORD*)(mem_offset + i) = sprite[i];
-   }
-}
-
 void init_gameplay() {
     UWORD i;
     
@@ -199,11 +190,11 @@ void init_gameplay() {
     // make_background();
     
     // load sprite tiles
-    load_sprite(0x8000, blank16);
-    load_sprite(0x8040, cat0);
-    load_sprite(0x8080, cat1);
-    load_sprite(0x80C0, cat2);
-    load_sprite(0x8100, cat3);
+    set_sprite_data(0x00, 0x04, blank16);
+    set_sprite_data(0x04, 0x04, cat0);
+    set_sprite_data(0x08, 0x04, cat1);
+    set_sprite_data(0x0C, 0x04, cat2);
+    set_sprite_data(0x10, 0x04, cat3);
     
     // load tile tiles
     for(i = 0; i < 0x10; i++)
