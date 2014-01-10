@@ -160,10 +160,19 @@ void init_gameplay() {
 
     DISPLAY_OFF;
 
-    LCDC_REG = 0x01;
-    BGP_REG = OBP0_REG = OBP1_REG = 0xE4U;
+    LCDC_REG = 0x67;
+    /*
+     * LCD        = Off
+     * WindowBank = 0x9C00-0x9FFF
+     * Window     = On
+     * BG Chr     = 0x8800-0x97FF
+     * BG Bank    = 0x9800-9BFF
+     * OBJ        = 8x16
+     * OBJ        = On
+     * BG         = On
+     */
 
-    SPRITES_8x16;
+    BGP_REG = OBP0_REG = OBP1_REG = 0xE4U;
 
     // Initialize random number generator with contents of DIV_REG
     seed.b.l = DIV_REG;
@@ -198,8 +207,6 @@ void init_gameplay() {
 
     startRow();
 
-    SHOW_SPRITES;
-    DISPLAY_ON;
 
     colY = 0x00;
 }
