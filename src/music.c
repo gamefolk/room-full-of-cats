@@ -34,23 +34,23 @@ const UWORD frequencies[] = {
 // Represents the music to be played sequentially
 const UBYTE music[] = {
     C2, C2, SILENCE, C2, C2, SILENCE, C2, C2,
-    G1, G1, SILENCE, G1, G1, SILENCE, G1, G1, 
-    F1, F1, SILENCE, F1, F1, SILENCE, F1, F1, 
+    G1, G1, SILENCE, G1, G1, SILENCE, G1, G1,
+    F1, F1, SILENCE, F1, F1, SILENCE, F1, F1,
     A1, A1, SILENCE, G1, G1, SILENCE, C2, SILENCE,
-    
-    // Loop again 
+
+    // Loop again
     C2, C2, SILENCE, C2, C2, SILENCE, C2, C2,
-    G1, G1, SILENCE, G1, G1, SILENCE, G1, G1, 
-    F1, F1, SILENCE, F1, F1, SILENCE, F1, F1, 
+    G1, G1, SILENCE, G1, G1, SILENCE, G1, G1,
+    F1, F1, SILENCE, F1, F1, SILENCE, F1, F1,
     A1, A1, SILENCE, G1, G1, SILENCE,
 
-    C3, C3, C3, D3, D3, D3, C3, C3, B2, B2, B2, 
+    C3, C3, C3, D3, D3, D3, C3, C3, B2, B2, B2,
     C3, C3, C3, B2, B2, A2, A2, A2, B2, B2, B2,
     A2, A2, G2, G2, C3, B2, C3, C3, SILENCE,
 
-    C3, SILENCE, B2, SILENCE, A2, SILENCE, B2, SILENCE, C3, C3, C3, SILENCE, 
-    C1, C1, C1, SILENCE, SILENCE, 
-    
+    C3, SILENCE, B2, SILENCE, A2, SILENCE, B2, SILENCE, C3, C3, C3, SILENCE,
+    C1, C1, C1, SILENCE, SILENCE,
+
     END
 };
 
@@ -65,23 +65,23 @@ void play_music(BOOLEAN should_loop) {
     vblanks++;
     if (vblanks > VBLANK_LIMIT) {
         switch(music[note_index]) {
-            case SILENCE: 
+            case SILENCE:
                 NR12_REG = 0;
                 break;
-           
+
             case END:
                 if (should_loop) {
                     note_index = 0;
                 }
             // Fall through
             default:
-                NR12_REG = 0xF0; 
+                NR12_REG = 0xF0;
                 freq = frequencies[music[note_index]];
-           
+
                 NR13_REG = (unsigned char)freq;     // Low bits of frequency
                 NR14_REG = 0x80 | (freq >> 8);      // High bits of frequency
         }
-        
+
         note_index++;
         vblanks = 0;
     }
