@@ -1,6 +1,5 @@
 #include <gb/gb.h>
 #include <rand.h>
-#include <stdio.h>
 
 #include "tiles/fallcats.c"
 #include "tiles/blank.c"
@@ -8,402 +7,296 @@
 #include "tiles/background.c"
 #include "tiles/bgtiles.c"
 
-// Rows and columns in the cat grid
-#define NUM_ROWS 4
-#define NUM_COLS 3
+// IDs to identify which cat is falling
+const UBYTE STRIPED_CAT_ID = 0x04;
+const UBYTE BLACK_CAT_ID   = 0x08;
+const UBYTE FALLING_CAT_ID = 0x0C;
+const UBYTE SIAMESE_CAT_ID = 0x10;
 
-// Locations of sprites in memory
-#define BLANK_SPRITE_MEMORY 0x00
-#define STRIPED_CAT_MEMORY  0x04
-#define BLACK_CAT_MEMORY    0x08
-#define FALLING_CAT_MEMORY  0x0C
-#define SIAMESE_CAT_MEMORY  0x10
+const UWORD COLUMN_SIZE  = 0x04; // cats per column
+const UWORD VBLANK_LIMIT = 60;  // number of vblanks until gameplay update
 
-// Locations of the bucket cats in tile memory
-#define BLANK_TILE       0x01
-#define STRIPED_CAT_TILE 0x06
-#define BLACK_CAT_TILE   0x07
-#define SIAMESE_CAT_TILE 0x04
-#define FALLING_CAT_TILE 0x05
+UWORD colX, colY, sprID, tileID;
+UWORD buckets[4]; 
+UWORD score[4];
 
-// Locations of background tiles in memory
-#define CAT_FACE_MEMORY   0x04
-
-// The number of tiles that makes up one sprite
-#define TILES_IN_SPRITE 4
-
-// Dimensions and locations of the cat grid
-#define GRID_START_X   32
-#define GRID_START_Y   32
-#define COLUMN_SPACING 8
-#define ROW_SPACING    8
-#define BUCKET_START_X 32
-#define BUCKET_START_Y 120
-#define BUCKET_WIDTH   16
-#define BUCKET_HEIGHT  16
-
-// Dimensions of a cat sprite in pixels
-#define CAT_WIDTH  16
-#define CAT_HEIGHT 16
-
-// Dimensions of a tile in pixels
-#define TILE_WIDTH  8
-#define TILE_HEIGHT 8
-
-// Time until a gameplay update in vblanks
-#define TIME_UNTIL_UPDATE 60
-
-// Time until the joypad should be updated in vblanks
-#define TIME_UNTIL_INPUT  10
-
-// Function prototypes
-void set_sprite_tile_16(UBYTE number, UBYTE tile);
-void assign_new_cat(UBYTE sprite_id);
-void move_sprite_16(UBYTE number, UBYTE x, UBYTE y);
-
-// An array to hold all of the sprite IDsa
-UBYTE cat_table [NUM_ROWS][NUM_COLS];
-
-// Struct to hold bucket information
-struct bucket_entry {
-    UBYTE cat_mem;
-    UBYTE num_cats;
-}
-
-// The buckets to catch cats in
-struct bucket_entry buckets[NUM_COLS];
-
-// The random number generator seed
 fixed seed;
 
-BOOLEAN need_new_cats = TRUE, cats_changed = TRUE;
-
-/*
- * Convenience method to assign a blank sprite to an arbitrary sprite
- */
-void blank(UBYTE sprite_id) {
-    set_sprite_tile_16(sprite_id, BLANK_SPRITE_MEMORY);
-}
-
-/*
- * Assigns sprite IDs to every entry in the cat table
- */
-void init_cat_table() {
-    BYTE i, j;
-
-    UBYTE sprite_id = 0x0;
-    for(i = 0; i < NUM_ROWS; i++) {
-        for(j = 0; j < NUM_COLS; j++) {
-            blank(sprite_id);
-            cat_table[i][j] = sprite_id;
-            sprite_id += 0x2;
-        }
+void clearTiles() {
+    UWORD i;
+    for (i = 0; i < 0x400; i++) {
+        *(UWORD*)(0x9800 + i) = 0x00;
     }
 }
 
-/*
- * Initializes the bucket array with empty sprites and no cats
- */
-void init_buckets() {
-    BYTE i;
-
-    for(i = 0; i < NUM_COLS; i++) {
-        buckets[i].cat_mem = BLANK_SPRITE_MEMORY;
-        buckets[i].num_cats = 0;
-    }
-}
-
-/*
- * Randomly assigns a different set of cat tiles to a given sprite ID
- */
-void assign_new_cat(UBYTE sprite_id) {
-    // TODO: Make this more random
-    INT8 gen = rand();
-
-    // Choose a cat at random.
-    if (gen & 1) {
-        set_sprite_tile_16(sprite_id, STRIPED_CAT_MEMORY);
-    } else if (gen & 4) {
-        set_sprite_tile_16(sprite_id, BLACK_CAT_MEMORY);
-    } else if (gen & 16) {
-        set_sprite_tile_16(sprite_id, FALLING_CAT_MEMORY);
-    } else {
-        set_sprite_tile_16(sprite_id, SIAMESE_CAT_MEMORY);
-    }
-}
-
-/*
- * Erases a rectangular area of the tile map
- */
-void clear(UBYTE x, UBYTE y, UBYTE w, UBYTE h) {
-    UBYTE i, j;
-    UBYTE tile = BLANK_TILE;
-
-    for (i = 0; i < h; i++) {
-        for (j = 0; j < w; j++) {
-            set_bkg_tiles(x + i, y + j, 1, 1, &tile);
-        }
-    }
-}
-
-/*
- * Changes the tiles associated with the bottom cat of a given column to be
- * blank. If the entire column is blank, does nothing.
- */
-void remove_bottom_cat(UBYTE column) {
-    UBYTE cat, i;
-
-    for(i = NUM_ROWS - 1; i >= 0; i--) {
-        cat = get_sprite_tile(cat_table[i][column]);
-        if (BLANK_SPRITE_MEMORY != cat) {
-            blank(cat_table[i][column]);
-            cats_changed = TRUE;
-            return;
-        }
-    }
-}
-
-/*
- * Redraws the entire screen based on the current game state. Should only be
- * called during the vblank to ensure that there are no graphical errors.
- */
-void render() {
-    UBYTE x, y, x_offset, y_offset, cats_to_draw, cat_type, cat, tile;
-    BYTE i, j;
-
-    disable_interrupts();
-
-    // Don't render if we don't have to
-    if (!cats_changed) {
-        return;
-    }
-
-    /*
-     * Give the sprites at the top of the cat table a new sprite if they've
-     * been updated recently
-     */
-    if(need_new_cats) {
-        for (i = 0; i < NUM_COLS; i++) {
-            assign_new_cat(cat_table[0][i]);
-        }
-
-        need_new_cats = FALSE;
-    }
-   
-    // Redraw every sprite in the cat table
-    for (i = 0; i < NUM_ROWS; i++) {
-        y = GRID_START_Y + i * (ROW_SPACING + CAT_HEIGHT);
-        for (j = 0; j < NUM_COLS; j++) {
-            x = GRID_START_X + j * (COLUMN_SPACING + CAT_WIDTH);
-            move_sprite_16(cat_table[i][j], x, y);
-        }
-    }
-
-    // Redraw the buckets
-    for (i = 0; i < NUM_COLS; i++) {
-        struct bucket_entry *entry = &buckets[i];
-        cats_to_draw = entry->num_cats;
-        cat_type = entry->cat_mem;
-
-        // Find the top left corner of the bucket in the tile map
-        x = (BUCKET_START_X + i * (COLUMN_SPACING + BUCKET_WIDTH)) / TILE_WIDTH - 1;
-        y = BUCKET_START_Y / TILE_HEIGHT - 1;
-
-        // Blank out the current bucket
-        tile = BLANK_TILE;
-        set_bkg_tiles(x, y, BUCKET_WIDTH / TILE_WIDTH,
-                            BUCKET_HEIGHT / TILE_HEIGHT, &tile);
-
-        // Erase any tiles currently in the bucket
-        clear(x, y, BUCKET_WIDTH / TILE_WIDTH, BUCKET_HEIGHT / TILE_HEIGHT);
-
-        // Draw the cats into the bucket
-        for (cat = 0; cat < cats_to_draw; cat++) {
-            x_offset = cat % 2;
-            y_offset = cat / 2;
-
-            // Select the appropriate tile for the cat
-            if (cat_type == STRIPED_CAT_MEMORY) {
-                tile = STRIPED_CAT_TILE;
-            } else if(cat_type == BLACK_CAT_MEMORY) {
-                tile = BLACK_CAT_TILE;
-            } else if (cat_type == SIAMESE_CAT_MEMORY) {
-                tile = SIAMESE_CAT_TILE;
-            } else if (cat_type == FALLING_CAT_MEMORY) {
-                tile = FALLING_CAT_TILE;
-            }
-
-            // Draw the cat into tile background memory
-            set_bkg_tiles(x + x_offset, y + y_offset, 1, 1, &tile);
-        }
-    }
-
-    // TODO: Draw score
+void makeColumn(UWORD colNum) {
+    UWORD cur, y, x;
     
-    cats_changed = FALSE;
-    enable_interrupts();
+    cur = 0xC000;
+    cur += colNum * (COLUMN_SIZE * 0x08);
+        
+    for (y = 0x20; y < (0x20 + ((UBYTE)COLUMN_SIZE * 0x10)); y += 0x14) {
+        x = colX;
+        
+        *(UBYTE*)(cur) = y;
+        *(UBYTE*)(cur + 0x01) = x;
+        *(UBYTE*)(cur + 0x02) = 0x00;
+        *(UBYTE*)(cur + 0x03) = 0x00;
+    
+        x += 0x08;
+    
+        *(UBYTE*)(cur + 0x04) = y;
+        *(UBYTE*)(cur + 0x05) = x;
+        *(UBYTE*)(cur + 0x06) = 0x02;
+        *(UBYTE*)(cur + 0x07) = 0x00;
+        
+        cur += 0x08;
+    }
 }
 
-/*
- * Shifts the rows of the cat table down by one, and assigns the bottom row to
- * the top row.
- */
-void update_cats() {
-    UBYTE tmp [NUM_COLS];
-    BYTE i, j;
+UWORD setColumn(UWORD colNum) {
+    UWORD cur, last;
+
+    cur = 0xC002;
+    cur += colNum * (COLUMN_SIZE * 0x08);
+    cur += colY * 0x08;
     
-    // Update the cat table
-    for(j = 0; j < NUM_COLS; j++) {
-        tmp[j] = cat_table[NUM_ROWS - 1][j];
-    }
+    last = *(UBYTE*)(cur);
+    
+    *(UBYTE*)(cur) = sprID;
+    *(UBYTE*)(cur + 0x04) = sprID + 0x02;
+    
+    return last;
+}
 
-    for (i = NUM_ROWS - 1; i > 0; i--) {
-        for (j = 0; j < NUM_COLS; j++) {
-            cat_table[i][j] = cat_table[i - 1][j];
-        }
-    }
+/*void setTarget()
+{
+    UWORD cur;
+    
+    *(UBYTE*)(lastTarget) = 0x00;
+    *(UBYTE*)(lastTarget + 0x04) = 0x00;
 
-    for(j = 0; j < NUM_COLS; j++) {
-        cat_table[0][j] = tmp[j];
-    }
+    cur = 0xC003;
+    cur += colNum * (COLUMNSIZE * 0x08);
+    cur += colY * 0x08;
+        
+    *(UBYTE*)(cur) = 0x20;
+    *(UBYTE*)(cur + 0x04) = 0x20;
+    
+    lastTarget = cur;
+}*/
 
-    need_new_cats = TRUE;
-
-    // Update the buckets
-    for(i = 0; i < NUM_COLS; i++) {
-        UBYTE fallen_cat = get_sprite_tile(tmp[i]);
-        struct bucket_entry *bucket = &buckets[i];
-
-
-        // Make sure that the fallen cat matches the bucket
-        if (fallen_cat == BLANK_SPRITE_MEMORY) {
-            // Do nothing
-        } else if (fallen_cat == bucket->cat_mem) {
-            if (bucket->num_cats < 3) {
-                bucket->num_cats++;
-            } else {
-                bucket->num_cats = 0;
-
-                // TODO: Increase score
-            }
+void setBuckets(UWORD colNum) {
+    if (sprID == STRIPED_CAT_ID) {
+        if (buckets[colNum] == 0x03) {
+            score[colNum] = 0x03;
         } else {
-            // Wrong cat type. Empty the bucket
-            bucket->num_cats = 1;
-            bucket->cat_mem = fallen_cat;
+            buckets[colNum] = 0x03;
+            score[colNum] = 0;
+        }
+    } else if (sprID == BLACK_CAT_ID) {
+        if (buckets[colNum] == 0x04) {
+            score[colNum] = 0x04;
+        } else {
+            buckets[colNum] = 0x04;
+            score[colNum] = 0;
+        }
+    } else if (sprID == FALLING_CAT_ID) {
+            if (buckets[colNum] == 0x02) {
+                score[colNum] = 0x02;
+            } else {
+                buckets[colNum] = 0x02;
+                score[colNum] = 0;
+            }
+    } else if (sprID == SIAMESE_CAT_ID) {
+        if (buckets[colNum] == 0x01) {
+            score[colNum] = 0x01;
+        } else {
+            buckets[colNum] = 0x01;
+            score[colNum] = 0;
         }
     }
-
-    cats_changed = TRUE;
 }
 
-/*
- * Wrapper to treat two 8x16 sprites as a 16x16 sprite
- */
-void set_sprite_tile_16(UBYTE number, UBYTE tile) {
-    const UBYTE TILE_OFFSET = 2;
-    set_sprite_tile(number, tile);
-    set_sprite_tile(number + 1, tile + TILE_OFFSET);
-}
-
-/*
- * Wrapper to treat two 8x16 sprites as a 16x16 sprite
- */
-void move_sprite_16(UBYTE number, UBYTE x, UBYTE y) {
-    const UBYTE X_OFFSET = 0x08;
-    move_sprite(number, x, y);
-    move_sprite(number + 1, x + X_OFFSET, y);
-}
-
-/*
- * Takes care of overhead necessary to begin play. This function will
- * - Initialize registers
- * - Load sprites and tiles into memory
- * - Initialize the game state
- * - Set the appropriate sprite mode (8x16)
- * - Register the vblank handler
- * - Turn on the display
- */
-void init_gameplay() {
-    LCDC_REG = 0x01;
-    BGP_REG = OBP0_REG = OBP1_REG = 0xE4U;
+void moveRow() {    
+    UWORD startY;
+    UWORD colNum;   
     
-    wait_vbl_done();
+    startY = colY;
+    for (colNum = 0x00; colNum < 0x03; colNum++) {
+        sprID = 0x00;
+        sprID = setColumn(colNum);
+        
+        if (colY < 0x03) {
+            colY += 0x01;
+            setColumn(colNum);
+        } else {
+            setBuckets(colNum);
+        }
+        
+        colY = startY;
+    }
+}
+
+void moveRows() {
+    colY = 0x03;
+    moveRow();
+    colY = 0x02;
+    moveRow();
+    colY = 0x01;
+    moveRow();
+    colY = 0x00;
+    moveRow();
+}
+
+UWORD pickCat() {
+    UINT8 gen = rand();
+    
+    if (gen & 1)
+        return STRIPED_CAT_ID;
+    else if (gen & 4)
+        return BLACK_CAT_ID;
+    else if (gen & 16)
+        return FALLING_CAT_ID;
+    else
+        return SIAMESE_CAT_ID;
+}
+
+void startRow() {   
+    UWORD colNum;
+    const UWORD NUM_COLS = 0x03;
+    for(colNum = 0; colNum < NUM_COLS; colNum++) {
+        colY = 0x00;
+        sprID = pickCat();
+        setColumn(colNum);
+    }
+}
+
+void load_sprite(UWORD mem_offset, UBYTE* sprite) {
+    const UWORD sprite_offset = 0x40; 
+    UWORD i;
+   
+   for(i = 0; i < sprite_offset; i++) {
+       *(UWORD*)(mem_offset + i) = sprite[i];
+   }
+}
+
+void init_gameplay() {
+    UWORD i;
+    
     DISPLAY_OFF;
     
-    // Initialize random number generator with contents of DIV_REG
+    LCDC_REG = 0x01; 
+    BGP_REG = OBP0_REG = OBP1_REG = 0xE4U; 
+    
+    SPRITES_8x16;
+
+    // Initialize random number generator with contents of DIV_REG    
     seed.b.l = DIV_REG;
     seed.b.h = DIV_REG;
     initrand(seed.w);
-    
-    // Load sprites into VRAM
-    set_sprite_data(BLANK_SPRITE_MEMORY, sizeof(blank16) / TILES_IN_SPRITE, blank16);
-    set_sprite_data(STRIPED_CAT_MEMORY,  sizeof(cat0)    / TILES_IN_SPRITE, cat0);
-    set_sprite_data(BLACK_CAT_MEMORY,    sizeof(cat1)    / TILES_IN_SPRITE, cat1);
-    set_sprite_data(FALLING_CAT_MEMORY,  sizeof(cat2)    / TILES_IN_SPRITE, cat2);
-    set_sprite_data(SIAMESE_CAT_MEMORY,  sizeof(cat3)    / TILES_IN_SPRITE, cat3);
 
-    SPRITES_8x16;
+    // make_background();
+    
+    // load sprite tiles
+    load_sprite(0x8000, blank16);
+    load_sprite(0x8040, cat0);
+    load_sprite(0x8080, cat1);
+    load_sprite(0x80C0, cat2);
+    load_sprite(0x8100, cat3);
+    
+    // load tile tiles
+    for(i = 0; i < 0x10; i++)
+        *(UWORD*)(0x9000+i) = blank8[i];
+    
+    for(i = 0; i < 0x40; i++)
+        *(UWORD*)(0x9010+i) = faces[i];
+    
+    // clear background tiles
+    clearTiles();
+    
+    // background code
+    //set_bkg_data(0,10,bgtiles);
+    
+    //set_bkg_data(0, 4, tileData);
+    
+    /*for (i=0; i < 0x400; i++) {
+        *(UWORD*)(0x9800 + i) = 10;
+    }*/
+
+    //set_bkg_tiles(0,0,20,19,background);
+    
+    // set up columns
+    
+    colX = 0x2B;
+    
+    for (i = 0; i < 3; i++) {
+        makeColumn(i);
+        colX += 0x18;
+    }
+    
+    startRow();
+    
     SHOW_SPRITES;
-    
-    // Load tiles into VRAM
-    set_bkg_data(CAT_FACE_MEMORY, 4, faces);
-    
-    // TODO: Load background into VRAM
-    SHOW_BKG;
-
-    // We don't use the window tile memory
-    HIDE_WIN;
-    
-   
-    // Initialize game state
-    init_cat_table();
-    init_buckets();
-    update_cats();
-
-    add_VBL(render);
-
-    wait_vbl_done();
-    
     DISPLAY_ON;
+    
+    colY = 0x00;    
 }
 
 void do_gameplay() {
-    static UBYTE vblanks_since_input = 0;
-    static UBYTE vblanks_since_update = 0;
+    static UBYTE vblanks = 0;
+    UBYTE buttons;
+    UWORD i;
+    UWORD colNum = 0x00;
 
-    UBYTE buttons, column;
-
-    BOOLEAN should_remove_column = FALSE;
+    vblanks++;
 
     buttons = joypad();
-
-    // TODO: delay between button presses
     switch(buttons) {
         case(J_LEFT):
-            column = 0;
-            should_remove_column = TRUE;
+            colNum = 0x00;
+            colY = 0x02;
+            sprID = 0x00;
+
+            setColumn(colNum);
         break;
         
         case(J_DOWN):
-            column = 1;
-            should_remove_column = TRUE;
+            colNum = 0x01;
+            colY = 0x02;
+            sprID = 0x00;
+
+            setColumn(colNum);
         break;
         
         case(J_RIGHT):
-            column = 2;
-            should_remove_column = TRUE;
+            colNum = 0x02;
+            colY = 0x02;
+            sprID = 0x00;
+
+            setColumn(colNum);
         break;
     }
 
-    if(should_remove_column) {
-        remove_bottom_cat(column);
-    }
+    if (vblanks > VBLANK_LIMIT) {
+        vblanks = 0;
 
-    if (vblanks_since_update > TIME_UNTIL_UPDATE) {
-        update_cats();
-        vblanks_since_update = 0;
+        for (i = 0; i < 4; i++) {
+            UWORD columnOffset;
+            columnOffset = 3 * i ;
+            *(UWORD*)(0x9800 + 0x1C0 + 0x04 + columnOffset) = buckets[i];
+            *(UWORD*)(0x9801 + 0x1C0 + 0x04 + columnOffset) = score[i];
+        }
+        
+        /*for (i = 0; i < score[0]; i++) {
+            *(UWORD*)(0x9800 + 0x1C0 + 0x04 + i) = buckets[0];
+        }*/
+        
+        /*colNum = targetX;
+        colY = targetY;
+        setTarget();*/
+        
+        moveRows();
+        startRow();
     }
-
-    vblanks_since_input++;
-    vblanks_since_update++;
 }
