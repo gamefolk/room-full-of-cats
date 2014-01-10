@@ -158,6 +158,7 @@ void startRow() {
 void init_gameplay() {
     UWORD i;
 
+    disable_interrupts();
     DISPLAY_OFF;
 
     LCDC_REG = 0x67;
@@ -172,12 +173,8 @@ void init_gameplay() {
      * BG         = On
      */
 
+    // Set palettes
     BGP_REG = OBP0_REG = OBP1_REG = 0xE4U;
-
-    // Initialize random number generator with contents of DIV_REG
-    seed.b.l = DIV_REG;
-    seed.b.h = DIV_REG;
-    initrand(seed.w);
 
     // load sprite tiles
     set_sprite_data(0x00, 0x04, blank16);
@@ -195,6 +192,14 @@ void init_gameplay() {
 
     // clear background tiles
     clearTiles();
+
+    DISPLAY_ON;
+    enable_interrupts();
+
+    // Initialize random number generator with contents of DIV_REG
+    seed.b.l = DIV_REG;
+    seed.b.h = DIV_REG;
+    initrand(seed.w);
 
     // set up columns
 
