@@ -17,17 +17,10 @@ const UWORD COLUMN_SIZE  = 0x04; // cats per column
 const UWORD VBLANK_LIMIT = 60;  // number of vblanks until gameplay update
 
 UWORD colX, colY, sprID, tileID;
-UWORD buckets[4]; 
+UWORD buckets[4];
 UWORD score[4];
 
 fixed seed;
-
-void clearTiles() {
-    UWORD i;
-    for (i = 0; i < 0x400; i++) {
-        *(UWORD*)(0x9800 + i) = 0x00;
-    }
-}
 
 void makeColumn(UWORD colNum) {
     UWORD cur, y, x;
@@ -183,15 +176,9 @@ void init_gameplay() {
     set_sprite_data(0x0C, 0x04, cat2);
     set_sprite_data(0x10, 0x04, cat3);
 
-    // load tile tiles
-    for(i = 0; i < 0x10; i++)
-        *(UWORD*)(0x9000+i) = blank8[i];
-
-    for(i = 0; i < 0x40; i++)
-        *(UWORD*)(0x9010+i) = faces[i];
-
-    // clear background tiles
-    clearTiles();
+    // Load background tiles
+    set_bkg_data(0x00, 0x01, blank8);
+    set_bkg_data(0x01, 0x04, faces);
 
     DISPLAY_ON;
     enable_interrupts();
