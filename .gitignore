@@ -1,2 +1,6 @@
 *.gb
 *.swp
+*.lst
+*.map
+*.o
+*.rel
