@@ -29,8 +29,9 @@ $(OBJECTS): %.o : $(SRCDIR)/%.c
 
 .PHONY: clean
 clean:
-	@$(rm) $(OBJECTS)
+	$(rm) $(OBJECTS)
+	$(rm) $(wildcard *.lst)
 
 .PHONY: remove
 remove: clean
-	@$(rm) $(call FixPath,$(BINDIR)/$(TARGET))
+	$(rm) $(call FixPath,$(BINDIR)/$(TARGET))
