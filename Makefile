@@ -1,24 +1,36 @@
+TARGET=cats.gb
+
 CC=lcc
 CFLAGS=-Wa-l -Iinclude
+
+LINKER = lcc -o
+LFLAGS=$(CFLAGS)
+
+SRCDIR = src
+BINDIR = bin
+
+SOURCES := $(wildcard $(SRCDIR)/*.c)
+OBJECTS := $(SOURCES:$(SRCDIR)/%.c=%.o)
 
 # Make sure that Windows paths work with lcc
 ifdef SystemRoot
 	FixPath = $(subst /,\,$1)
+	rm      = del /S
 else
 	FixPath = $1
+	rm      = rm -f
 endif
 
-all: main.o music.o gameplay.o
-	$(CC) $(CFLAGS) main.o music.o gameplay.o -o $(call FixPath,bin/cats.gb)
+$(BINDIR)/$(TARGET): $(OBJECTS)
+	$(LINKER) $@ $(LFLAGS) $(OBJECTS)
 
-main.o: src/main.c
-	$(CC) $(CFLAGS) -c $(call FixPath,src/main.c)
+$(OBJECTS): %.o : $(SRCDIR)/%.c
+	$(CC) $(CFLAGS) -c $(call FixPath,$<) -o $@
 
-music.o: src/music.c
-	$(CC) $(CFLAGS) -c $(call FixPath,src/music.c)
-
-gameplay.o: src/gameplay.c
-	$(CC) $(CFLAGS) -c $(call FixPath,src/gameplay.c)
-
+.PHONY: clean
 clean:
-	rm -rf *.o bin/cats.gb
+	@$(rm) $(OBJECTS)
+
+.PHONY: remove
+remove: clean
+	@$(rm) $(call FixPath,$(BINDIR)/$(TARGET))
