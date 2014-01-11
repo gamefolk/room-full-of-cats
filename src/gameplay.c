@@ -176,6 +176,13 @@ void init_gameplay() {
     set_sprite_data(0x0C, 0x04, cat2);
     set_sprite_data(0x10, 0x04, cat3);
 
+    // Create all the sprites. 2 for each cat.
+    for (i = 0; i < 32; i++) {
+        set_sprite_tile(i, i * 2);
+    }
+
+    SHOW_SPRITES;
+
     // Load background tiles
     set_bkg_data(0x00, 0x01, blank8);
     set_bkg_data(0x01, 0x04, faces);
