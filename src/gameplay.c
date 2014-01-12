@@ -7,11 +7,16 @@
 #include "tiles/background.c"
 #include "tiles/bgtiles.c"
 
-// IDs to identify which cat is falling
-const UBYTE STRIPED_CAT_ID = 0x04;
-const UBYTE BLACK_CAT_ID   = 0x08;
-const UBYTE FALLING_CAT_ID = 0x0C;
-const UBYTE SIAMESE_CAT_ID = 0x10;
+/*
+ * Tile IDs for each cat sprite.
+ */
+typedef enum {
+    BLANK       = 0x00,
+    STRIPED_CAT = 0x04,
+    BLACK_CAT   = 0x08,
+    FALLING_CAT = 0x0C,
+    SIAMESE_CAT = 0x10
+} sprite_t;
 
 const UWORD COLUMN_SIZE  = 0x04; // cats per column
 const UWORD VBLANK_LIMIT = 60;  // number of vblanks until gameplay update
@@ -63,28 +68,28 @@ UWORD setColumn(UWORD colNum) {
 }
 
 void setBuckets(UWORD colNum) {
-    if (sprID == STRIPED_CAT_ID) {
+    if (sprID == STRIPED_CAT) {
         if (buckets[colNum] == 0x03) {
             score[colNum] = 0x03;
         } else {
             buckets[colNum] = 0x03;
             score[colNum] = 0;
         }
-    } else if (sprID == BLACK_CAT_ID) {
+    } else if (sprID == BLACK_CAT) {
         if (buckets[colNum] == 0x04) {
             score[colNum] = 0x04;
         } else {
             buckets[colNum] = 0x04;
             score[colNum] = 0;
         }
-    } else if (sprID == FALLING_CAT_ID) {
+    } else if (sprID == FALLING_CAT) {
             if (buckets[colNum] == 0x02) {
                 score[colNum] = 0x02;
             } else {
                 buckets[colNum] = 0x02;
                 score[colNum] = 0;
             }
-    } else if (sprID == SIAMESE_CAT_ID) {
+    } else if (sprID == SIAMESE_CAT) {
         if (buckets[colNum] == 0x01) {
             score[colNum] = 0x01;
         } else {
@@ -129,13 +134,13 @@ UWORD pickCat() {
     UINT8 gen = rand();
 
     if (gen & 1)
-        return STRIPED_CAT_ID;
+        return STRIPED_CAT;
     else if (gen & 4)
-        return BLACK_CAT_ID;
+        return BLACK_CAT;
     else if (gen & 16)
-        return FALLING_CAT_ID;
+        return FALLING_CAT;
     else
-        return SIAMESE_CAT_ID;
+        return SIAMESE_CAT;
 }
 
 void startRow() {
