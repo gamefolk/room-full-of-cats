@@ -25,7 +25,7 @@ void setBuckets(UWORD);
 void start_row();
 void shift_rows();
 UBYTE get_cat_tile(UBYTE);
-UBYTE pickCat();
+sprite_t pickCat();
 void change_cat(UBYTE, UBYTE);
 void draw_cat(UBYTE, UBYTE, UBYTE);
 
@@ -136,14 +136,14 @@ void shift_rows() {
 /*
  * Convenience method to get the tile number of a cat.
  */
-UBYTE get_cat_tile(UBYTE nb) {
+sprite_t get_cat_tile(UBYTE nb) {
     return get_sprite_tile(nb * 2);
 }
 
 /*
  * Returns a random cat ID.
  */
-UBYTE pickCat() {
+sprite_t pickCat() {
     UINT8 gen = rand();
 
     if (gen & 1)
