@@ -1,7 +1,7 @@
 TARGET=cats.gb
 
 CC=lcc
-CFLAGS=-Wa-l -Iinclude
+CFLAGS=-Iinclude
 
 LINKER = lcc -o
 LFLAGS=$(CFLAGS)
