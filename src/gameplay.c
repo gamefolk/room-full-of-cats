@@ -19,14 +19,36 @@ typedef enum {
 } sprite_t;
 
 /*
+ * Tile IDs for each cat face background tile.
+ */
+typedef enum {
+    BLANK_CAT_FACE   = 0x00,
+    STRIPED_CAT_FACE = 0x03,
+    BLACK_CAT_FACE   = 0x04,
+    FALLING_CAT_FACE = 0x02,
+    SIAMESE_CAT_FACE = 0x01
+} cat_face_t;
+
+/*
+ * Stores the bucket information (the type of cat, as well as the numer of
+ * cats) in a simple data wrapper.
+ */
+typedef struct bucket_t {
+    sprite_t cat_id;
+    UBYTE num_cats;
+} bucket_t;
+
+/*
  * Function prototypes
  */
-void setBuckets(UWORD);
+void set_buckets();
 void start_row();
 void shift_rows();
 UBYTE get_cat_tile(UBYTE);
 sprite_t pickCat();
+cat_face_t get_cat_face(sprite_t);
 void change_cat(UBYTE, UBYTE);
+void draw_cat_face(UBYTE, UBYTE, cat_face_t);
 void draw_cat(UBYTE, UBYTE, UBYTE);
 
 /*
@@ -52,6 +74,8 @@ void draw_cat(UBYTE, UBYTE, UBYTE);
 #define COLUMN_MARGIN   40              /* X_START + 4 * COLUMN_PADDING */
 #define ROW_PADDING     8
 #define ROW_MARGIN      24              /* Y_START + ROW_PADDING */
+#define BUCKET_ROW      14              /* (ROW_MARGIN + 4 * (ROW_PADDING + SPRITE_HEIGHT) + ROW_PADDING) / 8 */
+#define BUCKET_COLUMN   4               /* (COLUMN_MARGIN - 1) / 8 */
 
 /*
  * Room full of cats uses 8x16 sprites, but the cats themselves are represented
@@ -76,41 +100,43 @@ void draw_cat(UBYTE, UBYTE, UBYTE);
  */
 #define VBLANK_UPDATE   60              /* Vblanks until gameplay update */
 
-UBYTE sprID;
-UWORD buckets[4];
-UWORD score[4];
+bucket_t buckets[NUM_CATS];
 
-void setBuckets(UWORD colNum) {
-    if (sprID == STRIPED_CAT) {
-        if (buckets[colNum] == 0x03) {
-            score[colNum] = 0x03;
-        } else {
-            buckets[colNum] = 0x03;
-            score[colNum] = 0;
-        }
-    } else if (sprID == BLACK_CAT) {
-        if (buckets[colNum] == 0x04) {
-            score[colNum] = 0x04;
-        } else {
-            buckets[colNum] = 0x04;
-            score[colNum] = 0;
-        }
-    } else if (sprID == FALLING_CAT) {
-            if (buckets[colNum] == 0x02) {
-                score[colNum] = 0x02;
-            } else {
-                buckets[colNum] = 0x02;
-                score[colNum] = 0;
-            }
-    } else if (sprID == SIAMESE_CAT) {
-        if (buckets[colNum] == 0x01) {
-            score[colNum] = 0x01;
-        } else {
-            buckets[colNum] = 0x01;
-            score[colNum] = 0;
-        }
+/*
+ * Updates the buckets to contain the last cat in each column. If the bucket is
+ * full, or contains a different type of cat, then the contents of the bucket
+ * are replaced by the new cat.
+ */
+void set_buckets() {
+    UBYTE i;
+    sprite_t cat_tile;
+    UBYTE bucket_x, bucket_y;
+
+    cat_tile = get_cat_tile(12);
+
+    for (i = 0; i < NUM_COLUMNS; i++) {
+        cat_tile = get_cat_tile(12 + i);
+
+        bucket_x = BUCKET_COLUMN + 3 * i;
+        bucket_y = BUCKET_ROW;
+        draw_cat_face(bucket_x, bucket_y, get_cat_face(cat_tile));
+    }
+
+}
+
+/*
+ * Translates a cat sprite tile ID into a cat face background tile address
+ */
+cat_face_t get_cat_face(sprite_t cat_tile) {
+    switch(cat_tile) {
+        case BLANK:         return BLANK_CAT_FACE;
+        case STRIPED_CAT:   return STRIPED_CAT_FACE;
+        case BLACK_CAT:     return BLACK_CAT_FACE;
+        case FALLING_CAT:   return FALLING_CAT_FACE;
+        case SIAMESE_CAT:   return SIAMESE_CAT_FACE;
     }
 }
+
 
 /*
  * Sets the top row of sprites to be a new row of random cats.
@@ -127,7 +153,6 @@ void start_row() {
  */
 void shift_rows() {
     UBYTE i;
-
     for (i = NUM_CATS - 1; i >= NUM_COLUMNS; i--) {
         change_cat(i, get_cat_tile(i - NUM_COLUMNS));
     }
@@ -175,6 +200,13 @@ void draw_cat(UBYTE cat_number, UBYTE x, UBYTE y) {
 }
 
 /*
+ * Convenience function to draw a cat face tile to the background.
+ */
+void draw_cat_face(UBYTE x, UBYTE y, cat_face_t cat_face) {
+    set_bkg_tiles(x, y, 1, 1, &cat_face);
+}
+
+/*
  * Initializes the state of the game. Should be called before the program
  * enters the game loop. It ensures that the appropriate registers are
  * initialized for displaying graphics and that the random number generator is
@@ -188,13 +220,15 @@ void init_gameplay() {
     disable_interrupts();
     DISPLAY_OFF;
 
-    LCDC_REG = 0x67;
+    LCDC_REG = 0x6F;
     /*
      * LCD        = Off
      * WindowBank = 0x9C00-0x9FFF
      * Window     = On
      * BG Chr     = 0x8800-0x97FF
-     * BG Bank    = 0x9800-9BFF
+     * BG Bank    = 0x9C00-0x9FFF -- may cause problems for window memory,
+     *                               but for now it allows the background to
+     *                               show
      * OBJ        = 8x16
      * OBJ        = On
      * BG         = On
@@ -220,6 +254,8 @@ void init_gameplay() {
     // Load background tiles
     set_bkg_data(0x00, 0x01, blank8);
     set_bkg_data(0x01, 0x04, faces);
+
+    SHOW_BKG;
 
     DISPLAY_ON;
     enable_interrupts();
@@ -273,5 +309,6 @@ void do_gameplay() {
 
         shift_rows();
         start_row();
+        set_buckets();
     }
 }
