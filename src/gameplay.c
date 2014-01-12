@@ -69,33 +69,6 @@ UWORD colX, colY, sprID, tileID;
 UWORD buckets[4];
 UWORD score[4];
 
-fixed seed;
-
-void makeColumn(UWORD colNum) {
-    UWORD cur, y, x;
-
-    cur = 0xC000;
-    cur += colNum * (COLUMN_SIZE * 0x08);
-
-    for (y = 0x20; y < (0x20 + ((UBYTE)COLUMN_SIZE * 0x10)); y += 0x14) {
-        x = colX;
-
-        *(UBYTE*)(cur) = y;
-        *(UBYTE*)(cur + 0x01) = x;
-        *(UBYTE*)(cur + 0x02) = 0x00;
-        *(UBYTE*)(cur + 0x03) = 0x00;
-
-        x += 0x08;
-
-        *(UBYTE*)(cur + 0x04) = y;
-        *(UBYTE*)(cur + 0x05) = x;
-        *(UBYTE*)(cur + 0x06) = 0x02;
-        *(UBYTE*)(cur + 0x07) = 0x00;
-
-        cur += 0x08;
-    }
-}
-
 UWORD setColumn(UWORD colNum) {
     UWORD cur, last;
 
@@ -197,8 +170,26 @@ void startRow() {
     }
 }
 
+/*
+ * Convenience function to draw a cat sprite to the screen. Each cat_number
+ * actually refers to two 8x16 sprites, but the two sprites are drawn together
+ * as a unit.
+ */
+void draw_cat(UBYTE cat_number, UBYTE x, UBYTE y) {
+    move_sprite(cat_number * 2, x, y);
+    move_sprite(cat_number * 2 + 1, x + 8, y);
+}
+
+/*
+ * Initializes the state of the game. Should be called before the program
+ * enters the game loop. It ensures that the appropriate registers are
+ * initialized for displaying graphics and that the random number generator is
+ * seeded.
+ */
 void init_gameplay() {
-    UWORD i;
+    UBYTE i, j;
+    UBYTE x_pos, y_pos;
+    fixed seed;
 
     disable_interrupts();
     DISPLAY_OFF;
@@ -218,16 +209,16 @@ void init_gameplay() {
     // Set palettes
     BGP_REG = OBP0_REG = OBP1_REG = 0xE4U;
 
-    // load sprite tiles
+    // Load sprite tiles
     set_sprite_data(0x00, 0x04, blank16);
     set_sprite_data(0x04, 0x04, cat0);
     set_sprite_data(0x08, 0x04, cat1);
     set_sprite_data(0x0C, 0x04, cat2);
     set_sprite_data(0x10, 0x04, cat3);
 
-    // Create all the sprites. 2 for each cat.
-    for (i = 0; i < 32; i++) {
-        set_sprite_tile(i, i * 2);
+    // Create all the sprites and make them blank. 2 for each cat.
+    for (i = 0; i < NUM_CATS * 2; i ++) {
+        set_sprite_tile(i, BLANK);
     }
 
     SHOW_SPRITES;
@@ -239,24 +230,25 @@ void init_gameplay() {
     DISPLAY_ON;
     enable_interrupts();
 
+    // Draw cat sprite locations
+    for (i = 0; i < NUM_ROWS; i++) {
+        for (j = 0; j < NUM_COLUMNS; j++) {
+            x_pos = COLUMN_MARGIN;
+            x_pos += j * (COLUMN_PADDING + CAT_WIDTH);
+
+            y_pos = ROW_MARGIN;
+            y_pos += i * (ROW_PADDING + CAT_HEIGHT);
+
+            draw_cat(i * 4 + j, x_pos, y_pos);
+        }
+    }
+
     // Initialize random number generator with contents of DIV_REG
     seed.b.l = DIV_REG;
     seed.b.h = DIV_REG;
     initrand(seed.w);
 
-    // set up columns
-
-    colX = 0x2B;
-
-    for (i = 0; i < 3; i++) {
-        makeColumn(i);
-        colX += 0x18;
-    }
-
     startRow();
-
-
-    colY = 0x00;
 }
 
 void do_gameplay() {
