@@ -18,8 +18,52 @@ typedef enum {
     SIAMESE_CAT = 0x10
 } sprite_t;
 
-const UWORD COLUMN_SIZE  = 0x04; // cats per column
-const UWORD VBLANK_LIMIT = 60;  // number of vblanks until gameplay update
+/*
+ * Constants useful for drawing sprites. Note that SDCC cannot determine
+ * constant expressions correctly (!) so we have to do some math to determine
+ * what the correct values should be.
+ *
+ * It is possible to draw sprites off the screen, so the first pixels that show
+ * the entire sprite are given by X_START and Y_START. Similarly, the last
+ * pixels that a sprite may be drawn at for it to be on the entire screen are
+ * given by X_END and Y_END.
+ */
+#define X_START         8
+#define X_END           168
+#define Y_START         16
+#define Y_END           160
+
+/*
+ * Margin gives the spacing between the edges of the screen and where the rows
+ * or columns should start. Padding is the spacing between rows or columns.
+ */
+#define COLUMN_PADDING  8
+#define COLUMN_MARGIN   40              /* X_START + 4 * COLUMN_PADDING */
+#define ROW_PADDING     8
+#define ROW_MARGIN      24              /* Y_START + ROW_PADDING */
+
+/*
+ * Room full of cats uses 8x16 sprites, but the cats themselves are represented
+ * by 2 8x16 (left and right halves) to make a single 16x16 sprites. "Cat"
+ * refers to the 16x16 sprite, while "sprite" refers to the 8x16 tile used by
+ * GBDK.
+ */
+#define SPRITE_WIDTH    8
+#define SPRITE_HEIGHT   16
+#define CAT_WIDTH       16              /* SPRITE_WIDTH * 2 */
+#define CAT_HEIGHT      16              /* SPRITE_HEIGHT */
+
+/*
+ * Constants that describe gameplay elements.
+ */
+#define NUM_ROWS        4
+#define NUM_COLUMNS     4
+#define NUM_CATS        16              /* NUM_ROWS * NUM_COLUMNS */
+
+/*
+ * Constants that affect gameplay.
+ */
+#define VBLANK_UPDATE   60              /* Vblanks until gameplay update */
 
 UWORD colX, colY, sprID, tileID;
 UWORD buckets[4];
@@ -56,7 +100,7 @@ UWORD setColumn(UWORD colNum) {
     UWORD cur, last;
 
     cur = 0xC002;
-    cur += colNum * (COLUMN_SIZE * 0x08);
+    cur += colNum * (NUM_COLUMNS * 0x08);
     cur += colY * 0x08;
 
     last = *(UBYTE*)(cur);
@@ -250,7 +294,7 @@ void do_gameplay() {
         break;
     }
 
-    if (vblanks > VBLANK_LIMIT) {
+    if (vblanks > VBLANK_UPDATE) {
         vblanks = 0;
 
         for (i = 0; i < 4; i++) {
