@@ -19,6 +19,17 @@ typedef enum {
 } sprite_t;
 
 /*
+ * Function prototypes
+ */
+void setBuckets(UWORD);
+void start_row();
+void shift_rows();
+UBYTE get_cat_tile(UBYTE);
+UBYTE pickCat();
+void change_cat(UBYTE, UBYTE);
+void draw_cat(UBYTE, UBYTE, UBYTE);
+
+/*
  * Constants useful for drawing sprites. Note that SDCC cannot determine
  * constant expressions correctly (!) so we have to do some math to determine
  * what the correct values should be.
@@ -65,24 +76,9 @@ typedef enum {
  */
 #define VBLANK_UPDATE   60              /* Vblanks until gameplay update */
 
-UWORD colX, colY, sprID, tileID;
+UBYTE sprID;
 UWORD buckets[4];
 UWORD score[4];
-
-UWORD setColumn(UWORD colNum) {
-    UWORD cur, last;
-
-    cur = 0xC002;
-    cur += colNum * (NUM_COLUMNS * 0x08);
-    cur += colY * 0x08;
-
-    last = *(UBYTE*)(cur);
-
-    *(UBYTE*)(cur) = sprID;
-    *(UBYTE*)(cur + 0x04) = sprID + 0x02;
-
-    return last;
-}
 
 void setBuckets(UWORD colNum) {
     if (sprID == STRIPED_CAT) {
@@ -116,38 +112,38 @@ void setBuckets(UWORD colNum) {
     }
 }
 
-void moveRow() {
-    UWORD startY;
-    UWORD colNum;
-
-    startY = colY;
-    for (colNum = 0x00; colNum < 0x03; colNum++) {
-        sprID = 0x00;
-        sprID = setColumn(colNum);
-
-        if (colY < 0x03) {
-            colY += 0x01;
-            setColumn(colNum);
-        } else {
-            setBuckets(colNum);
-        }
-
-        colY = startY;
+/*
+ * Sets the top row of sprites to be a new row of random cats.
+ */
+void start_row() {
+    UBYTE i;
+    for (i = 0; i < NUM_COLUMNS; i++) {
+        change_cat(i, pickCat());
     }
 }
 
-void moveRows() {
-    colY = 0x03;
-    moveRow();
-    colY = 0x02;
-    moveRow();
-    colY = 0x01;
-    moveRow();
-    colY = 0x00;
-    moveRow();
+/*
+ * Copies the cat sprites from the row above into each row of cats.
+ */
+void shift_rows() {
+    UBYTE i;
+
+    for (i = NUM_CATS - 1; i >= NUM_COLUMNS; i--) {
+        change_cat(i, get_cat_tile(i - NUM_COLUMNS));
+    }
 }
 
-UWORD pickCat() {
+/*
+ * Convenience method to get the tile number of a cat.
+ */
+UBYTE get_cat_tile(UBYTE nb) {
+    return get_sprite_tile(nb * 2);
+}
+
+/*
+ * Returns a random cat ID.
+ */
+UBYTE pickCat() {
     UINT8 gen = rand();
 
     if (gen & 1)
@@ -160,14 +156,12 @@ UWORD pickCat() {
         return SIAMESE_CAT;
 }
 
-void startRow() {
-    UWORD colNum;
-    const UWORD NUM_COLS = 0x03;
-    for(colNum = 0; colNum < NUM_COLS; colNum++) {
-        colY = 0x00;
-        sprID = pickCat();
-        setColumn(colNum);
-    }
+/*
+ * Change the sprite tiles used by a cat to new sprite tiles.
+ */
+void change_cat(UBYTE cat_number, UBYTE sprite_tile) {
+    set_sprite_tile(cat_number * 2, sprite_tile);
+    set_sprite_tile(cat_number * 2 + 1, sprite_tile + 0x2);
 }
 
 /*
@@ -247,56 +241,37 @@ void init_gameplay() {
     seed.b.l = DIV_REG;
     seed.b.h = DIV_REG;
     initrand(seed.w);
-
-    startRow();
 }
 
 void do_gameplay() {
     static UBYTE vblanks = 0;
     UBYTE buttons;
-    UWORD i;
-    UWORD colNum = 0x00;
 
     vblanks++;
 
     buttons = joypad();
     switch(buttons) {
         case(J_LEFT):
-            colNum = 0x00;
-            colY = 0x02;
-            sprID = 0x00;
-
-            setColumn(colNum);
+            change_cat(8, BLANK);
         break;
 
         case(J_DOWN):
-            colNum = 0x01;
-            colY = 0x02;
-            sprID = 0x00;
+            change_cat(9, BLANK);
+        break;
 
-            setColumn(colNum);
+        case(J_UP):
+            change_cat(10, BLANK);
         break;
 
         case(J_RIGHT):
-            colNum = 0x02;
-            colY = 0x02;
-            sprID = 0x00;
-
-            setColumn(colNum);
+            change_cat(11, BLANK);
         break;
     }
 
     if (vblanks > VBLANK_UPDATE) {
         vblanks = 0;
 
-        for (i = 0; i < 4; i++) {
-            UWORD columnOffset;
-            columnOffset = 3 * i ;
-            *(UWORD*)(0x9800 + 0x1C0 + 0x04 + columnOffset) = buckets[i];
-            *(UWORD*)(0x9801 + 0x1C0 + 0x04 + columnOffset) = score[i];
-        }
-
-        moveRows();
-        startRow();
+        shift_rows();
+        start_row();
     }
 }
