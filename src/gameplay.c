@@ -200,7 +200,7 @@ void change_cat(UBYTE cat_number, UBYTE sprite_tile) {
  */
 void draw_cat(UBYTE cat_number, UBYTE x, UBYTE y) {
     move_sprite(cat_number * 2, x, y);
-    move_sprite(cat_number * 2 + 1, x + 8, y);
+    move_sprite(cat_number * 2 + 1, x + SPRITE_WIDTH, y);
 }
 
 /*
@@ -219,6 +219,7 @@ void draw_cat_face(UBYTE x, UBYTE y, cat_face_t cat_face) {
 void init_gameplay() {
     UBYTE i, j;
     UBYTE x_pos, y_pos;
+    UBYTE cat_number;
     fixed seed;
 
     disable_interrupts();
@@ -242,11 +243,11 @@ void init_gameplay() {
     BGP_REG = OBP0_REG = OBP1_REG = 0xE4U;
 
     // Load sprite tiles
-    set_sprite_data(0x00, 0x04, blank16);
-    set_sprite_data(0x04, 0x04, cat0);
-    set_sprite_data(0x08, 0x04, cat1);
-    set_sprite_data(0x0C, 0x04, cat2);
-    set_sprite_data(0x10, 0x04, cat3);
+    set_sprite_data(BLANK,       0x04, blank16);
+    set_sprite_data(STRIPED_CAT, 0x04, cat0);
+    set_sprite_data(BLACK_CAT,   0x04, cat1);
+    set_sprite_data(FALLING_CAT, 0x04, cat2);
+    set_sprite_data(SIAMESE_CAT, 0x04, cat3);
 
     // Create all the sprites and make them blank. 2 for each cat.
     for (i = 0; i < NUM_CATS * 2; i ++) {
@@ -256,8 +257,8 @@ void init_gameplay() {
     SHOW_SPRITES;
 
     // Load background tiles
-    set_bkg_data(0x00, 0x01, blank8);
-    set_bkg_data(0x01, 0x04, faces);
+    set_bkg_data(BLANK_CAT_FACE,   0x01, blank8);
+    set_bkg_data(SIAMESE_CAT_FACE, 0x04, faces);    // Read all faces at once.
 
     SHOW_BKG;
 
@@ -273,7 +274,9 @@ void init_gameplay() {
             y_pos = ROW_MARGIN;
             y_pos += i * (ROW_PADDING + CAT_HEIGHT);
 
-            draw_cat(i * 4 + j, x_pos, y_pos);
+            cat_number = i * NUM_COLUMNS + j;
+
+            draw_cat(cat_number, x_pos, y_pos);
         }
     }
 
