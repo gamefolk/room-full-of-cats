@@ -19,9 +19,11 @@ ifdef SystemRoot
 else
 	FixPath = $1
 	rm      = rm -f
+	mkdir   = mkdir -p
 endif
 
 $(BINDIR)/$(TARGET): $(OBJECTS)
+	-@mkdir $(BINDIR)
 	$(LINKER) $@ $(LFLAGS) $(OBJECTS)
 
 $(OBJECTS): %.o : $(SRCDIR)/%.c
