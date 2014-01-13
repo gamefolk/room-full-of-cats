@@ -153,7 +153,11 @@ void start_row() {
  */
 void shift_rows() {
     UBYTE i;
+
+    // Iterate backwards through the cats. Stop at the first row, because the
+    // first row of cats will be replaced with new cats anyways.
     for (i = NUM_CATS - 1; i >= NUM_COLUMNS; i--) {
+        // Change the current cat's tile to the cat above it.
         change_cat(i, get_cat_tile(i - NUM_COLUMNS));
     }
 }
