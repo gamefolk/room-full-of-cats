@@ -121,7 +121,6 @@ void set_buckets() {
         bucket_y = BUCKET_ROW;
         draw_cat_face(bucket_x, bucket_y, get_cat_face(cat_tile));
     }
-
 }
 
 /*
@@ -314,8 +313,8 @@ void do_gameplay() {
     if (vblanks > VBLANK_UPDATE) {
         vblanks = 0;
 
+        set_buckets();
         shift_rows();
         start_row();
-        set_buckets();
     }
 }
