@@ -16,6 +16,7 @@ OBJECTS := $(SOURCES:$(SRCDIR)/%.c=%.o)
 ifdef SystemRoot
 	FixPath = $(subst /,\,$1)
 	rm      = del /S
+	mkdir   = mkdir
 else
 	FixPath = $1
 	rm      = rm -f
@@ -23,7 +24,7 @@ else
 endif
 
 $(BINDIR)/$(TARGET): $(OBJECTS)
-	-@mkdir $(BINDIR)
+	$(mkdir) $(BINDIR)
 	$(LINKER) $@ $(LFLAGS) $(OBJECTS)
 
 $(OBJECTS): %.o : $(SRCDIR)/%.c
