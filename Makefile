@@ -1,7 +1,7 @@
 TARGET=cats.gb
 
 CC=lcc
-CFLAGS=-Iinclude -Wa-l -Wl-m -Wl-j -DUSE_SFR_FOR_REG
+CFLAGS=-Iinclude -Wa-l -Wl-m -Wl-j
 
 LINKER = lcc -o
 LFLAGS=$(CFLAGS)
