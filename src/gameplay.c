@@ -44,7 +44,7 @@ typedef struct bucket_t {
 void set_buckets();
 void start_row();
 void shift_rows();
-UBYTE get_cat_tile(UBYTE);
+sprite_t get_cat_tile(UBYTE);
 sprite_t pickCat();
 cat_face_t get_cat_face(sprite_t);
 void change_cat(UBYTE, UBYTE);
@@ -208,7 +208,7 @@ void draw_cat(UBYTE cat_number, UBYTE x, UBYTE y) {
  * Convenience function to draw a cat face tile to the background.
  */
 void draw_cat_face(UBYTE x, UBYTE y, cat_face_t cat_face) {
-    set_bkg_tiles(x, y, 1, 1, &cat_face);
+    set_bkg_tiles(x, y, 1, 1, (unsigned char*)&cat_face);
 }
 
 /*
