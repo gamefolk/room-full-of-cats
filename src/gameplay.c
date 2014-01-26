@@ -153,10 +153,12 @@ void start_row() {
 void shift_rows() {
     UBYTE i;
 
-    // Iterate backwards through the cats. Stop at the first row, because the
-    // first row of cats will be replaced with new cats anyways.
+    /*
+     * Iterate backwards through the cats. Stop at the first row, because the
+     * first row of cats will be replaced with new cats anyways.
+     */
     for (i = NUM_CATS - 1; i >= NUM_COLUMNS; i--) {
-        // Change the current cat's tile to the cat above it.
+        /* Change the current cat's tile to the cat above it. */
         change_cat(i, get_cat_tile(i - NUM_COLUMNS));
     }
 }
@@ -238,33 +240,35 @@ void init_gameplay() {
      * BG         = On
      */
 
-    // Set palettes
+    /* Set palettes */
     BGP_REG = OBP0_REG = OBP1_REG = 0xE4U;
 
-    // Load sprite tiles
+    /* Load sprite tiles */
     set_sprite_data(BLANK,       0x04, blank16);
     set_sprite_data(STRIPED_CAT, 0x04, cat0);
     set_sprite_data(BLACK_CAT,   0x04, cat1);
     set_sprite_data(FALLING_CAT, 0x04, cat2);
     set_sprite_data(SIAMESE_CAT, 0x04, cat3);
 
-    // Create all the sprites and make them blank. 2 for each cat.
+    /* Create all the sprites and make them blank. 2 for each cat. */
     for (i = 0; i < NUM_CATS * 2; i ++) {
         set_sprite_tile(i, BLANK);
     }
 
     SHOW_SPRITES;
 
-    // Load background tiles
+    /* Load background tiles. We can read a all of the small cat faces into
+     * memory at once because they are next to each other starting at 0x04.
+     */
     set_bkg_data(BLANK_CAT_FACE,   0x01, blank8);
-    set_bkg_data(SIAMESE_CAT_FACE, 0x04, faces);    // Read all faces at once.
+    set_bkg_data(SIAMESE_CAT_FACE, 0x04, faces);
 
     SHOW_BKG;
 
     DISPLAY_ON;
     enable_interrupts();
 
-    // Draw cat sprite locations
+    /* Draw cat sprite locations */
     for (i = 0; i < NUM_ROWS; i++) {
         for (j = 0; j < NUM_COLUMNS; j++) {
             x_pos = COLUMN_MARGIN;
@@ -279,7 +283,7 @@ void init_gameplay() {
         }
     }
 
-    // Initialize random number generator with contents of DIV_REG
+    /* Initialize random number generator with contents of DIV_REG */
     seed.b.l = DIV_REG;
     seed.b.h = DIV_REG;
     initrand(seed.w);
