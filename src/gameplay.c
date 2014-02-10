@@ -41,15 +41,15 @@ typedef struct bucket_t {
 /*
  * Function prototypes
  */
-void set_buckets();
-void start_row();
-void shift_rows();
-sprite_t get_cat_tile(UBYTE);
-sprite_t pickCat();
-cat_face_t get_cat_face(sprite_t);
-void change_cat(UBYTE, UBYTE);
-void draw_cat_face(UBYTE, UBYTE, cat_face_t);
-void draw_cat(UBYTE, UBYTE, UBYTE);
+static void set_buckets();
+static void start_row();
+static void shift_rows();
+static sprite_t get_cat_tile(UBYTE);
+static sprite_t pickCat();
+static cat_face_t get_cat_face(sprite_t);
+static void change_cat(UBYTE, UBYTE);
+static void draw_cat_face(UBYTE, UBYTE, cat_face_t);
+static void draw_cat(UBYTE, UBYTE, UBYTE);
 
 /*
  * Constants useful for drawing sprites. Note that SDCC cannot determine
@@ -100,14 +100,14 @@ void draw_cat(UBYTE, UBYTE, UBYTE);
  */
 #define VBLANK_UPDATE   60              /* Vblanks until gameplay update */
 
-bucket_t buckets[NUM_CATS];
+static bucket_t buckets[NUM_CATS];
 
 /*
  * Updates the buckets to contain the last cat in each column. If the bucket is
  * full, or contains a different type of cat, then the contents of the bucket
  * are replaced by the new cat.
  */
-void set_buckets() {
+static void set_buckets() {
     UBYTE i;
     sprite_t cat_tile;
     UBYTE bucket_x, bucket_y;
@@ -126,7 +126,7 @@ void set_buckets() {
 /*
  * Translates a cat sprite tile ID into a cat face background tile address
  */
-cat_face_t get_cat_face(sprite_t cat_tile) {
+static cat_face_t get_cat_face(sprite_t cat_tile) {
     switch(cat_tile) {
         case BLANK:         return BLANK_CAT_FACE;
         case STRIPED_CAT:   return STRIPED_CAT_FACE;
@@ -140,7 +140,7 @@ cat_face_t get_cat_face(sprite_t cat_tile) {
 /*
  * Sets the top row of sprites to be a new row of random cats.
  */
-void start_row() {
+static void start_row() {
     UBYTE i;
     for (i = 0; i < NUM_COLUMNS; i++) {
         change_cat(i, pickCat());
@@ -150,7 +150,7 @@ void start_row() {
 /*
  * Copies the cat sprites from the row above into each row of cats.
  */
-void shift_rows() {
+static void shift_rows() {
     UBYTE i;
 
     /*
@@ -166,14 +166,14 @@ void shift_rows() {
 /*
  * Convenience method to get the tile number of a cat.
  */
-sprite_t get_cat_tile(UBYTE nb) {
+static sprite_t get_cat_tile(UBYTE nb) {
     return get_sprite_tile(nb * 2);
 }
 
 /*
  * Returns a random cat ID.
  */
-sprite_t pickCat() {
+static sprite_t pickCat() {
     UINT8 gen = rand();
 
     if (gen & 1)
@@ -189,7 +189,7 @@ sprite_t pickCat() {
 /*
  * Change the sprite tiles used by a cat to new sprite tiles.
  */
-void change_cat(UBYTE cat_number, UBYTE sprite_tile) {
+static void change_cat(UBYTE cat_number, UBYTE sprite_tile) {
     set_sprite_tile(cat_number * 2, sprite_tile);
     set_sprite_tile(cat_number * 2 + 1, sprite_tile + 0x2);
 }
@@ -199,7 +199,7 @@ void change_cat(UBYTE cat_number, UBYTE sprite_tile) {
  * actually refers to two 8x16 sprites, but the two sprites are drawn together
  * as a unit.
  */
-void draw_cat(UBYTE cat_number, UBYTE x, UBYTE y) {
+static void draw_cat(UBYTE cat_number, UBYTE x, UBYTE y) {
     move_sprite(cat_number * 2, x, y);
     move_sprite(cat_number * 2 + 1, x + SPRITE_WIDTH, y);
 }
@@ -207,7 +207,7 @@ void draw_cat(UBYTE cat_number, UBYTE x, UBYTE y) {
 /*
  * Convenience function to draw a cat face tile to the background.
  */
-void draw_cat_face(UBYTE x, UBYTE y, cat_face_t cat_face) {
+static void draw_cat_face(UBYTE x, UBYTE y, cat_face_t cat_face) {
     set_bkg_tiles(x, y, 1, 1, (unsigned char*)&cat_face);
 }
 
