@@ -1,9 +1,14 @@
+# cross-platform makefile requires gnuwin32 CoreUtils 
+
 TARGET=cats.gb
 
-#                          ??              .lst       .map       ??             ??                                    ROM only 
-CC=lcc -Iinclude -Wa-l -Wl-m -Wl-j -DUSE_SFR_FOR_REG -Wl-yt0
+CC=lcc
+CFLAGS=-Iinclude -DUSE_SFR_FOR_REG 
 
 LINKER = lcc -o
+#                   .lst        .map       ??          ROM only          
+LFLAGS= -Wa-l -Wl-m -Wl-j -Wl-yt0
+
 
 SRCDIR = src
 BINDIR = bin
@@ -15,15 +20,13 @@ OBJECTS := $(SOURCES:$(SRCDIR)/%.c=%.o)
 ifdef SystemRoot
 	FixPath = $(subst /,\,$1)
 	rm      = del /S
-	mkdir   = mkdir
 else
 	FixPath = $1
 	rm      = rm -f
-	mkdir   = mkdir -p
 endif
 
 $(BINDIR)/$(TARGET): $(OBJECTS)
-	$(mkdir) $(BINDIR)
+	test -d $(BINDIR) || mkdir $(BINDIR)
 	$(LINKER) $@ $(LFLAGS) $(OBJECTS)
 
 $(OBJECTS): %.o : $(SRCDIR)/%.c

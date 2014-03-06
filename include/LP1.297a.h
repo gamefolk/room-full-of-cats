@@ -1,5 +1,5 @@
-#ifndef LP1.297A_H
-#define LP1.297A_H
+#ifndef LP1_297A_H
+#define LP1_297A_H
 
 void init_music();
 void stopmusic();
