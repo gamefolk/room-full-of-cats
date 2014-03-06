@@ -22,12 +22,10 @@
 
 */
 
+#include<gb/gb.h>
 
-#include "songs_def.c"		// here you just include the file who will say to the player what he need to play
+#include "music/songs_def.c"		// here you just include the file who will say to the player what he need to play
 
-
-
-int clock01;			/* counter pour interuption go music  */
 unsigned int step;
 int timer;
 
@@ -557,8 +555,8 @@ void music()
 {
 
 if ( song_nbr == 0 ) {
-  ENABLE_RAM_MBC1;
-  SWITCH_ROM_MBC1 (1);	// you can choose here the bank where you place your song data in the exemple.bat file
+  //ENABLE_RAM_MBC1;
+  //SWITCH_ROM_MBC1 (1);	// you can choose here the bank where you place your song data in the exemple.bat file
   nbr_patern = 9 ;		// here you need to say the length of your song
 }
 /*  just copy this test how many time you have different songs
@@ -586,7 +584,15 @@ if ( song_nbr == 1 ){
 
   patern_definition();
   
-  DISABLE_RAM_MBC1;
+  //DISABLE_RAM_MBC1;
+}
+
+// added by Sam
+void init_music() {
+    step=0;
+    patern=0;
+    stopmusic();
+    patern_definition();
 }
 
 /************************************************************************/

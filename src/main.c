@@ -1,19 +1,14 @@
 #include<gb/gb.h>
 
 #include "gameplay.h"
-#include "music/LP1.297a.c"
+#include "LP1.297a.h"
 
-void main() {
-    BOOLEAN should_loop = 1;
+void main() {    
+    int clock01 = 0;
     
-    // set up lemon music player
-    clock01=0;
-    step=0;
-    patern=0;
-    stopmusic();
-    patern_definition();
-
+    init_music();
     init_gameplay();
+    
     while(1) {
         // control music speed
         if (clock01>=7) {

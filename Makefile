@@ -1,10 +1,9 @@
 TARGET=cats.gb
 
-CC=lcc
-CFLAGS=-Iinclude -Wa-l -Wl-m -Wl-j
+#                          ??              .lst       .map       ??             ??                                    ROM only 
+CC=lcc -Iinclude -Wa-l -Wl-m -Wl-j -DUSE_SFR_FOR_REG -Wl-yt0
 
 LINKER = lcc -o
-LFLAGS=$(CFLAGS)
 
 SRCDIR = src
 BINDIR = bin

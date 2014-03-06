@@ -1,4 +1,4 @@
-/*
+/*/*
 GB Song Creator v0.2.1b
       by Lemon
       30 july 00
@@ -8,7 +8,6 @@ to GameBoy Lemon player
 */
 
 
-#include <gb/gb.h> // don't forget to add this line to your song data
 
 UWORD data_song_fullos0[]=
 {
@@ -430,7 +429,7 @@ UWORD data_song_fullos5[]=
 };
 
 
-UWORD data_song_fullos6[]=
+/*UWORD data_song_fullos6[]=
 {
 0x9000,0x9000,0x38C0,0x9000,
 0x9000,0x9000,0x38C0,0x9000,
@@ -638,4 +637,4 @@ UWORD data_song_fullos8[]=
 0x50A0,0x2068,0x5028,0x6A80
 
 };
-
+*/
