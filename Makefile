@@ -1,4 +1,4 @@
-# cross-platform makefile requires gnuwin32 CoreUtils 
+# cross-platform makefile requires gnuwin32 CoreUtils
 
 TARGET=cats.gb
 
@@ -6,7 +6,7 @@ CC=lcc
 CFLAGS=-Iinclude -DUSE_SFR_FOR_REG 
 
 LINKER = lcc -o
-#                   .lst        .map       ??          ROM only          
+#       .lst  .map  ??    ROM only
 LFLAGS= -Wa-l -Wl-m -Wl-j -Wl-yt0
 
 
