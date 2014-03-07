@@ -3,7 +3,7 @@
 TARGET=cats.gb
 
 CC=lcc
-CFLAGS=-Iinclude -DUSE_SFR_FOR_REG 
+CFLAGS=-Iinclude
 
 LINKER = lcc -o
 #       .lst  .map  ??    ROM only
