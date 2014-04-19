@@ -1,5 +1,3 @@
-set(CMAKE_SYSTEM_NAME GameBoy)
-
 include(CMakeForceCompiler)
 cmake_force_c_compiler(lcc "lcc")
 
