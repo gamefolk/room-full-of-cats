@@ -5,7 +5,7 @@ cmake_force_c_compiler(lcc "lcc")
 
 cmake_minimum_required(VERSION 2.6)
 
-project(room_full_of_cats)
+project(room_full_of_cats C)
 
 include_directories(
     "include"
