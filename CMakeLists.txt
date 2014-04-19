@@ -11,6 +11,7 @@ include_directories(
     "include"
     "tiles"
     "music"
+    "."
 )
 
 file(GLOB_RECURSE SOURCES "src/*.c")
