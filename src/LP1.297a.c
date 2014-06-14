@@ -554,11 +554,11 @@ if (gb_freq != 0x48 ){
 void music()
 {
 
-if ( song_nbr == 0 ) {
+//if ( song_nbr == 0 ) {
   //ENABLE_RAM_MBC1;
   //SWITCH_ROM_MBC1 (1);	// you can choose here the bank where you place your song data in the exemple.bat file
-  nbr_patern = 9 ;		// here you need to say the length of your song
-}
+  //nbr_patern = 9 ;		// here you need to say the length of your song
+//}
 /*  just copy this test how many time you have different songs
  *	Of course you will need to add a test loop to choose wich song you want to play...
 if ( song_nbr == 1 ){
