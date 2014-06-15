@@ -38,11 +38,7 @@ flags = [
 '-Wall',
 '-Wextra',
 '-Werror',
-# We ignore implicit function declarations because clang reports the GDBK
-# included functions as not being declared
-'-Wno-implicit-function-declaration',
-'-fexceptions',
-'-DNDEBUG',
+'-pedantic-errors',
 '-std=c89',
 '-x',
 'c',
