@@ -44,6 +44,8 @@ flags = [
 'c',
 '-I',
 '.',
+'-I',
+'include',
 '-isystem',
 '/opt/gbdk/include',
 ]
