@@ -26,13 +26,17 @@
 
 #include "music/songs_def.c"		// here you just include the file who will say to the player what he need to play
 
-unsigned int step;
 int timer;
 
 int musicwait;
 
-
 int voice;
+
+void (*voice_funcs[4])();
+UWORD data_pos;
+unsigned int blanks;
+UWORD data_len;
+
 unsigned char freqLOW;
 unsigned char freqHI;
 unsigned int freqHI_v1;
@@ -62,6 +66,8 @@ unsigned int snd_poly3 ;
 unsigned int snd_cons3 ;
 void stopmusic();
 void resetmusic();
+
+#define REST 0x48
 
 /************************************************************************/
 // here is your instruments wave for channel 3
@@ -115,7 +121,6 @@ void resetmusic()
 
   NR52_REG = 0x00U;
 
-  step = 0;
   patern = 0;
   fx_pan0 = 0x11U ;
   fx_pan1 = 0x22U ;
@@ -409,14 +414,6 @@ void instru_test()
 
 void voice0()
 {
-
-voice = 0;
-
-data_song = data_song_ptr[step*4+voice] ;
-
-gb_freq = data_song >> 8 ;
-gb_freq = gb_freq >> 1 ;
-
 effect_test();
 
 if (gb_freq != 0x48 ){
@@ -446,14 +443,6 @@ if (gb_freq != 0x48 ){
 /************************************************************************/
  void voice1()
 {
-
-voice = 1 ;
-
-data_song = data_song_ptr[step*4+voice] ;
-
-gb_freq = data_song >> 8 ;
-gb_freq = gb_freq >> 1 ;
-
 effect_test();
 
 if (gb_freq != 0x48 ){
@@ -482,14 +471,6 @@ if (gb_freq != 0x48 ){
 /************************************************************************/
  void voice2()
 {
-
-voice = 2 ;
-
-data_song = data_song_ptr[step*4+voice] ;
-
-gb_freq = data_song >> 8 ;
-gb_freq = gb_freq >> 1 ;
-
 effect_test();
 
 if (gb_freq != 0x48 ){
@@ -520,15 +501,6 @@ if (gb_freq != 0x48 ){
 /************************************************************************/
  void voice3()
 {
-
-
-voice = 3 ;
-
-data_song = data_song_ptr[step*4+voice] ;
-
-gb_freq = data_song >> 8 ;
-gb_freq = gb_freq >> 1 ;
-
 effect_test();
 
 if (gb_freq != 0x48 ){      
@@ -550,49 +522,60 @@ if (gb_freq != 0x48 ){
 
 /************************************************************************/
 
-
 void music()
 {
-
-//if ( song_nbr == 0 ) {
-  //ENABLE_RAM_MBC1;
-  //SWITCH_ROM_MBC1 (1);	// you can choose here the bank where you place your song data in the exemple.bat file
-  //nbr_patern = 9 ;		// here you need to say the length of your song
-//}
-/*  just copy this test how many time you have different songs
- *	Of course you will need to add a test loop to choose wich song you want to play...
-if ( song_nbr == 1 ){
-  ENABLE_RAM_MBC1;
-  SWITCH_ROM_MBC1 (1);
-  nbr_patern = 2 ;
-}
-*/
-
-  voice0();
-  voice1();
-  voice2();
-  voice3();
-  
-  ++step;
-    if (step == 64){
-        step = 0;
-        ++patern;
-        if (patern >= nbr_patern ){
-            patern = 0;
+    voice = 0;
+    
+    while(voice < 4) {
+        if (blanks == 0) {
+            data_song = data_song_ptr[data_pos];
+            data_pos++;
+            
+            gb_freq = data_song >> 8;
+            
+             if (gb_freq == 0xFF) {
+                blanks = data_song & 0xFF;     
             }
-     }
-
-  patern_definition();
-  
-  //DISABLE_RAM_MBC1;
+            else {
+                gb_freq = gb_freq >> 1;
+                voice_funcs[voice]();
+                voice++;
+            }
+        }
+        else {
+            gb_freq = REST;
+            voice_funcs[voice]();
+            voice++;
+            blanks--;
+        }
+        if (data_pos > data_len) {
+            data_pos = 1;
+            patern++;
+            
+            if (patern >= nbr_patern ){
+                patern = 0;
+            }
+            patern_definition();
+            data_len = data_song_ptr[0];
+        }
+    }
 }
 
-// added by Sam
 void init_music() {
-    step=0;
+    voice_funcs[0] = voice0;
+    voice_funcs[1] = voice1;
+    voice_funcs[2] = voice2;
+    voice_funcs[3] = voice3;
+    
+    blanks = 0;
+    voice = 0;
+    data_pos = 1;
     patern=0;
+    
     stopmusic();
     patern_definition();
+    
+    data_len = data_song_ptr[0];
 }
 
 /************************************************************************/
