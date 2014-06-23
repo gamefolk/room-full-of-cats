@@ -244,11 +244,11 @@ void init_gameplay() {
     BGP_REG = OBP0_REG = OBP1_REG = 0xE4U;
 
     /* Load sprite tiles */
-    set_sprite_data(BLANK,       0x04, blank16);
-    set_sprite_data(STRIPED_CAT, 0x04, cat0);
-    set_sprite_data(BLACK_CAT,   0x04, cat1);
-    set_sprite_data(FALLING_CAT, 0x04, cat2);
-    set_sprite_data(SIAMESE_CAT, 0x04, cat3);
+    set_sprite_data(BLANK,       0x04, (UBYTE*)blank16);
+    set_sprite_data(STRIPED_CAT, 0x04, (UBYTE*)cat0);
+    set_sprite_data(BLACK_CAT,   0x04, (UBYTE*)cat1);
+    set_sprite_data(FALLING_CAT, 0x04, (UBYTE*)cat2);
+    set_sprite_data(SIAMESE_CAT, 0x04, (UBYTE*)cat3);
 
     /* Create all the sprites and make them blank. 2 for each cat. */
     for (i = 0; i < NUM_CATS * 2; i ++) {
@@ -260,8 +260,8 @@ void init_gameplay() {
     /* Load background tiles. We can read a all of the small cat faces into
      * memory at once because they are next to each other starting at 0x04.
      */
-    set_bkg_data(BLANK_CAT_FACE,   0x01, blank8);
-    set_bkg_data(SIAMESE_CAT_FACE, 0x04, faces);
+    set_bkg_data(BLANK_CAT_FACE,   0x01, (UBYTE*)blank8);
+    set_bkg_data(SIAMESE_CAT_FACE, 0x04, (UBYTE*)faces);
 
     SHOW_BKG;
 
