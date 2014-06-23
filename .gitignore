@@ -2,6 +2,7 @@
 *.swp
 *.lst
 *.map
+*.sym
 *.o
 *.rel
 bin

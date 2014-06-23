@@ -1,4 +1,4 @@
-UWORD data_song_0[]=
+const UWORD data_song_0[]=
 {
 0x0025,
     
@@ -25,7 +25,7 @@ UWORD data_song_0[]=
 };
 
 
-UWORD data_song_1[]=
+const UWORD data_song_1[]=
 {
 0x0026,
 
@@ -52,7 +52,7 @@ UWORD data_song_1[]=
 };
 
 
-UWORD data_song_2[]=
+const UWORD data_song_2[]=
 {
 0x0031,
     
@@ -84,7 +84,7 @@ UWORD data_song_2[]=
 };
 
 
-UWORD data_song_3[]=
+const UWORD data_song_3[]=
 {
 0x0084,
 
@@ -149,7 +149,7 @@ UWORD data_song_3[]=
 };
 
 
-UWORD data_song_4[]=
+const UWORD data_song_4[]=
 {
 0x0085,
     
@@ -216,7 +216,7 @@ UWORD data_song_4[]=
 };
 
 
-UWORD data_song_5[]=
+const UWORD data_song_5[]=
 {
 0x0074,
     
