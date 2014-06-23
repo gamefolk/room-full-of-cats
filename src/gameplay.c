@@ -124,11 +124,14 @@ static void set_buckets() {
                 continue;
             } else {
                 /* TODO: Increase score */
+                /* Clear bucket */
+                buckets[i].num_cats = 0;
+                buckets[i].cat_id = BLANK;
             }
+        } else {
+            buckets[i].num_cats = 1;
+            buckets[i].cat_id = cat_tile;
         }
-        /* Clear bucket */
-        buckets[i].num_cats = 0;
-        buckets[i].cat_id = BLANK;
     }
     draw_buckets();
 }
