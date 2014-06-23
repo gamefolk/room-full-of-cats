@@ -41,6 +41,7 @@ typedef struct bucket_t {
 /*
  * Function prototypes
  */
+static void draw_buckets();
 static void set_buckets();
 static void start_row();
 static void shift_rows();
@@ -91,16 +92,17 @@ static void draw_cat(UBYTE, UBYTE, UBYTE);
 /*
  * Constants that describe gameplay elements.
  */
-#define NUM_ROWS        4
-#define NUM_COLUMNS     4
-#define NUM_CATS        16              /* NUM_ROWS * NUM_COLUMNS */
+#define NUM_ROWS            4
+#define NUM_COLUMNS         4
+#define NUM_CATS            16              /* NUM_ROWS * NUM_COLUMNS */
+#define MAX_CATS_IN_BUCKET  4
 
 /*
  * Constants that affect gameplay.
  */
 #define VBLANK_UPDATE   60              /* Vblanks until gameplay update */
 
-static bucket_t buckets[NUM_CATS];
+static bucket_t buckets[NUM_COLUMNS];
 
 /*
  * Updates the buckets to contain the last cat in each column. If the bucket is
@@ -110,16 +112,49 @@ static bucket_t buckets[NUM_CATS];
 static void set_buckets() {
     UBYTE i;
     sprite_t cat_tile;
-    UBYTE bucket_x, bucket_y;
 
     cat_tile = get_cat_tile(12);
 
     for (i = 0; i < NUM_COLUMNS; i++) {
         cat_tile = get_cat_tile(12 + i);
+        if (buckets[i].cat_id == cat_tile || buckets[i].cat_id == BLANK) {
+            if (buckets[i].num_cats < MAX_CATS_IN_BUCKET) {
+                buckets[i].num_cats++;
+                buckets[i].cat_id = cat_tile;
+                continue;
+            } else {
+                /* TODO: Increase score */
+            }
+        }
+        /* Clear bucket */
+        buckets[i].num_cats = 0;
+        buckets[i].cat_id = BLANK;
+    }
+    draw_buckets();
+}
 
+static void draw_buckets() {
+    UBYTE i, j;
+    UBYTE bucket_x, bucket_y, x_offset, y_offset;
+    sprite_t cat_tile;
+    cat_face_t face_to_draw;
+
+    for (i = 0; i < NUM_COLUMNS; i++) {
+        cat_tile = buckets[i].cat_id;
         bucket_x = BUCKET_COLUMN + 3 * i;
         bucket_y = BUCKET_ROW;
-        draw_cat_face(bucket_x, bucket_y, get_cat_face(cat_tile));
+        for (j = 0; j < MAX_CATS_IN_BUCKET; j++) {
+            x_offset = (j % 2);
+            y_offset = (j / 2);
+
+            if (j < buckets[i].num_cats) {
+                face_to_draw = get_cat_face(cat_tile);
+            } else {
+                face_to_draw = BLANK_CAT_FACE;
+            }
+            draw_cat_face(bucket_x + x_offset, bucket_y + y_offset,
+                          face_to_draw);
+        }
     }
 }
 
