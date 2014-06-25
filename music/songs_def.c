@@ -2,7 +2,7 @@
 
 int patern ;
 int song_nbr ;
-int nbr_patern = 14 ;
+int nbr_patern = 13 ;
 UWORD *data_song_ptr;
 
 void patern_definition()
@@ -19,6 +19,5 @@ void patern_definition()
     if(patern == 9){ data_song_ptr = data_song_3 ; }
     if(patern == 10){ data_song_ptr = data_song_4 ; }
     if(patern == 11){ data_song_ptr = data_song_5 ; }
-    if(patern == 12){ data_song_ptr = data_song_3 ; }
-    if(patern == 13){ data_song_ptr = data_song_5 ; }
+    if(patern == 12){ data_song_ptr = data_song_6 ; }
 }
