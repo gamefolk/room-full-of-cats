@@ -130,20 +130,22 @@ static void set_buckets() {
                 buckets[i].num_cats = 0;
                 buckets[i].cat_id = BLANK;
             }
+#ifndef BLANKS_RESET_BUCKETS
         } else if (cat_tile != BLANK) {
             buckets[i].num_cats = 1;
             buckets[i].cat_id = cat_tile;
         }
-        /* replace with the following for blanks to reset buckets:
-            else {
-                if (cat_tile == BLANK) {
-                    buckets[i].num_cats = 0;
-                    buckets[i].cat_id = BLANK;
-                } else {                
-                    buckets[i].num_cats = 1;
-                    buckets[i].cat_id = cat_tile;
-                }
-            }*/
+#else
+        } else {
+            if (cat_tile == BLANK) {
+                buckets[i].num_cats = 0;
+                buckets[i].cat_id = BLANK;
+            } else {
+                buckets[i].num_cats = 1;
+                buckets[i].cat_id = cat_tile;
+            }
+        }
+#endif
     }
     draw_buckets();
 }
