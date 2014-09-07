@@ -1,21 +1,21 @@
 /*
-	
+
 	GB Lemon tracker	LP1.297a
 
 	it use the mod2gbl music pack
-	
+
 	you can change inside the "void sound ()" part the number of music you want to play
-	(don't forget to place the same value in the song_def.c and the exemple.bat) 
-	
+	(don't forget to place the same value in the song_def.c and the exemple.bat)
+
 	modified on 26 aug 2000
 		found a bug in volume update, that trashed the frequencies in voice 1 and 2 on real GB
-	
-	
+
+
 	modified on 30 july 2000
 		8 inst by voices
-		pan fx on each voices	
+		pan fx on each voices
 
-	code by Lemon on 26 sept 99 
+	code by Lemon on 26 sept 99
 
 	if you use this source (or part) in your code give me some credits... ^_^
 	lemon@urbanet.ch
@@ -142,7 +142,7 @@ void effect_test()
 		if (voice == 0){
         		fx_value = ( (data_song & 0x000F ) << 4 ) ;
         		fx_volume = fx_value;
-        		if (gb_freq == 0x48 ){ 
+        		if (gb_freq == 0x48 ){
         			NR12_REG = (snd_env0 & 0x000F) | fx_value ;
         			NR14_REG = freqHI_v1 | 0x80U ;
         		}
@@ -150,7 +150,7 @@ void effect_test()
 		if(voice == 1){
 			fx_value = ( (data_song & 0x000F ) << 4 ) ;
 			fx_volume = fx_value;
-			if (gb_freq == 0x48 ){ 
+			if (gb_freq == 0x48 ){
 				NR22_REG = (snd_env1 & 0x000F) | fx_value ;
 				NR24_REG = freqHI_v2 | 0x80U ;
 			}
@@ -162,21 +162,21 @@ void effect_test()
 			if (fx_value >= 6 && fx_value <= 10 ) { fx_value = 0x40U ; }
 			if (fx_value >= 11 && fx_value <= 15 ) { fx_value = 0x20U ; }
 			fx_volume = fx_value;
-			if (gb_freq == 0x48 ){ 
+			if (gb_freq == 0x48 ){
 				NR32_REG = fx_volume ;
 			}
 		}
 		if(voice == 3){
 			fx_value = ( (data_song & 0x000F ) << 4 ) ;
 			fx_volume = fx_value;
-			if (gb_freq == 0x48 ){ 
+			if (gb_freq == 0x48 ){
 				NR42_REG = (snd_env3 & 0x000F) | fx_value ;
 				NR44_REG = 0x80U ;
 			}
 		}
-		
 
-	} 
+
+	}
 //pan effect
 	if ( ((data_song >> 4 ) & 0x0003) == 2){
 		fx_value = (data_song & 0x000F );
@@ -216,7 +216,7 @@ void effect_test()
 		if(voice == 1){fx_volume = 0xF0U ;}
 		if(voice == 2){fx_volume = 0x20U ;}
 		if(voice == 3){fx_volume = 0xF0U ;}
-	}                  
+	}
 }
 
 /************************************************************************/
@@ -225,112 +225,112 @@ void instru_test()
 
 	if ( voice == 0 ) {
 		if ( ((data_song >> 6 ) & 0x0007) == 0){     // instrument 1 with sustain middle
-		
+
 			snd_swp0 = 0x00U;
 			snd_lngh0 = 0x07U;
-			snd_env0 = fx_volume | 0x02U;  
+			snd_env0 = fx_volume | 0x02U;
 			snd_cons0 = 0x80U;
 		} else
 		if ( ((data_song >> 6 ) & 0x0007) == 1){     // instrument 2 with sustain middle
-		
+
 			snd_swp0 = 0x00U;
 			snd_lngh0 = 0x47U;
 			snd_env0 = fx_volume | 0x02U;
 			snd_cons0 = 0x80U;
 		} else
 		if ( ((data_song >> 6 ) & 0x0007) == 2){     // instrument 3 with sustain middle
-		
+
 			snd_swp0 = 0x00U;
 			snd_lngh0 = 0x87U;
 			snd_env0 = fx_volume | 0x02U;
 			snd_cons0 = 0x80U;
 		} else
 		if ( ((data_song >> 6 ) & 0x0007) == 3){     // same as 1 with sustain infinite
-		
+
 			snd_swp0 = 0x00U;
 			snd_lngh0 = 0x07U;
 			snd_env0 = fx_volume | 0x00U;
 			snd_cons0 = 0x80U;
-		} 
+		}
  		if ( ((data_song >> 6 ) & 0x0007) == 4){     // same as 2 with sustain infinite
-		
+
 			snd_swp0 = 0x00U;
 			snd_lngh0 = 0x47U;
-			snd_env0 = fx_volume | 0x00U;  
+			snd_env0 = fx_volume | 0x00U;
 			snd_cons0 = 0x80U;
 		} else
 		if ( ((data_song >> 6 ) & 0x0007) == 5){     // same as 3 with sustain infinite
-		
+
 			snd_swp0 = 0x00U;
 			snd_lngh0 = 0x87U;
 			snd_env0 = fx_volume | 0x00U;
 			snd_cons0 = 0x80U;
 		} else
 		if ( ((data_song >> 6 ) & 0x0007) == 6){     // create your instrument 7 here
-		
+
 			snd_swp0 = 0x00U;
 			snd_lngh0 = 0x07U;
 			snd_env0 = fx_volume | 0x07U;
 			snd_cons0 = 0x80U;
 		} else
 		if ( ((data_song >> 6 ) & 0x0007) == 7){     // create your instrument 8 here
-		
+
 			snd_swp0 = 0x00U;
 			snd_lngh0 = 0x07U;
 			snd_env0 = fx_volume | 0x07U;
 			snd_cons0 = 0x80U;
-		} 
-		                          
+		}
+
 	}
 	if ( voice == 1 ) {
 		if ( ((data_song >> 6 ) & 0x0007) == 0){     // instrument 1 with sustain middle
-			
+
 			snd_lngh1 = 0x00U;
 			snd_env1 = fx_volume | 0x02U;
 			snd_cons1 = 0x80U;
 		} else
 		if ( ((data_song >> 6 ) & 0x0007) == 1){     // instrument 2 with sustain middle
-			
+
 			snd_lngh1 = 0x40U;
 			snd_env1 = fx_volume | 0x02U;
 			snd_cons1 = 0x80U;
 		} else
 		if ( ((data_song >> 6 ) & 0x0007) == 2){     // instrument 3 with sustain middle
-			
+
 			snd_lngh1 = 0x80U;
 			snd_env1 = fx_volume | 0x02U;
 			snd_cons1 = 0x80U;
 		} else
 		if ( ((data_song >> 6 ) & 0x0007) == 3){     // same as 1 with sustain infinite
-			
+
 			snd_lngh1 = 0x00U;
 			snd_env1 = fx_volume | 0x00U;
 			snd_cons1 = 0x80U;
-		} 
+		}
 		if ( ((data_song >> 6 ) & 0x0007) == 4){     // same as 2 with sustain infinite
-			
+
 			snd_lngh1 = 0x40U;
 			snd_env1 = fx_volume | 0x00U;
 			snd_cons1 = 0x80U;
 		} else
 		if ( ((data_song >> 6 ) & 0x0007) == 5){     // same as 3 with sustain infinite
-			
+
 			snd_lngh1 = 0x80U;
 			snd_env1 = fx_volume | 0x00U;
 			snd_cons1 = 0x80U;
 		} else
 		if ( ((data_song >> 6 ) & 0x0007) == 6){     // create your instrument 7 here
-			
+
 			snd_lngh1 = 0x80U;
 			snd_env1 = fx_volume | 0x07U;
 			snd_cons1 = 0x80U;
 		} else
 		if ( ((data_song >> 6 ) & 0x0007) == 7){     // create your instrument 8 here
-			
+
 			snd_lngh1 = 0x80U;
 			snd_env1 = fx_volume | 0x07U;
 			snd_cons1 = 0x80U;
-		} 
+		}
 
 	}
 	if ( voice == 2 ) {
@@ -343,7 +343,7 @@ void instru_test()
 	}
 	if ( voice == 3 ) {
 		if ( ((data_song >> 6 ) & 0x0007)== 0){
-			
+
 								// bass drum
 			snd_lngh3 = 0x01U;
 			snd_env3 = fx_volume | 0x01U;
@@ -351,7 +351,7 @@ void instru_test()
 			snd_cons3 = 0x80U;
 		} else
 		if ( ((data_song >> 6 ) & 0x0007)== 1){
-		
+
 								// hi hat
 			snd_lngh3 = 0x01U;
 			snd_env3 = fx_volume | 0x01U;
@@ -359,7 +359,7 @@ void instru_test()
 			snd_cons3 = 0x80U;
 		} else
 		if ( ((data_song >> 6 ) & 0x0007)== 2){
-			
+
 								// snare
 			snd_lngh3 = 0x01U;
 			snd_env3 = fx_volume | 0x01U;
@@ -367,15 +367,15 @@ void instru_test()
 			snd_cons3 = 0x80U;
 		} else
 		if ( ((data_song >> 6 ) & 0x0007)== 3){
-			
+
 								// cymbal
 			snd_lngh3 = 0x01U;
 			snd_env3 = fx_volume | 0x03U;
 			snd_poly3 = 0x02U;
 			snd_cons3 = 0x80U;
-		} 
+		}
 		if ( ((data_song >> 6 ) & 0x0007)== 4){
-			
+
 								// Laser tom high
 			snd_lngh3 = 0x01U;
 			snd_env3 = fx_volume | 0x01U;
@@ -383,7 +383,7 @@ void instru_test()
 			snd_cons3 = 0x80U;
 		} else
 		if ( ((data_song >> 6 ) & 0x0007)== 5){
-		
+
 								// Laser tom mid
 			snd_lngh3 = 0x01U;
 			snd_env3 = fx_volume | 0x01U;
@@ -391,7 +391,7 @@ void instru_test()
 			snd_cons3 = 0x80U;
 		} else
 		if ( ((data_song >> 6 ) & 0x0007)== 6){
-			
+
 								// Laser tom low
 			snd_lngh3 = 0x01U;
 			snd_env3 = fx_volume | 0x01U;
@@ -399,13 +399,13 @@ void instru_test()
 			snd_cons3 = 0x80U;
 		} else
 		if ( ((data_song >> 6 ) & 0x0007)== 7){
-			
+
 								// strange reflect
 			snd_lngh3 = 0x01U;
 			snd_env3 = fx_volume | 0x03U;
 			snd_poly3 = 0x4FU;
 			snd_cons3 = 0x80U;
-		} 
+		}
 
 	}
 }
@@ -420,24 +420,24 @@ if (gb_freq != 0x48 ){
 
     freqLOW = frequencies[gb_freq] & 0x00FF ;
     freqHI = (frequencies[gb_freq] & 0x0700) >> 8 ;
-    
+
     freqHI_v1 = freqHI ;
 
     instru_test();
-   
+
     NR51_REG = 0xEEU;
-    
+
     NR10_REG = snd_swp0 ;
     NR11_REG = snd_lngh0 ;
     NR12_REG = snd_env0 ;
 
     NR13_REG = freqLOW;                       // 8bits of data
     NR14_REG = snd_cons0 | freqHI;            // 3bits of data
-       
+
     NR51_REG = fx_pan0 | fx_pan1 | fx_pan2 | fx_pan3 ;
-         
+
    }
- 
+
 }
 
 /************************************************************************/
@@ -449,10 +449,10 @@ if (gb_freq != 0x48 ){
 
     freqLOW = frequencies[gb_freq] & 0x00FF ;
     freqHI = (frequencies[gb_freq] & 0x0700) >> 8 ;
-    
+
     freqHI_v2 = freqHI ;
-	 
-    instru_test();              
+
+    instru_test();
 
 
     NR51_REG = 0xDDU;
@@ -461,7 +461,7 @@ if (gb_freq != 0x48 ){
     NR22_REG = snd_env1 ;
     NR23_REG = freqLOW ;
     NR24_REG = snd_cons1 | freqHI ;
-            
+
     NR51_REG = fx_pan0 | fx_pan1 | fx_pan2 | fx_pan3 ;
 
     }
@@ -482,38 +482,38 @@ if (gb_freq != 0x48 ){
 
     NR30_REG = 0x00U;        //    0x80 = 1.0.0.0-0.0.0.0 output ON
     NR34_REG = 0x00U;
-    
+
     instru_test();
 
     NR31_REG = 0xFFU;
     NR32_REG = fx_volume;
-    
+
     NR30_REG = 0x80U;
-    
+
     NR33_REG = freqLOW ;
     NR34_REG = 0x80U | freqHI;
 
     NR51_REG = fx_pan0 | fx_pan1 | fx_pan2 | fx_pan3 ;
-     
+
    }
-   
+
 }
 /************************************************************************/
  void voice3()
 {
 effect_test();
 
-if (gb_freq != 0x48 ){      
-    
+if (gb_freq != 0x48 ){
+
     instru_test();
 
     NR51_REG = 0x77U;
-    
+
     NR41_REG = snd_lngh3;
     NR42_REG = snd_env3;
     NR43_REG = snd_poly3;
     NR44_REG = snd_cons3;
-              
+
     NR51_REG = fx_pan0 | fx_pan1 | fx_pan2 | fx_pan3 ;
 
    }
@@ -525,16 +525,16 @@ if (gb_freq != 0x48 ){
 void music()
 {
     voice = 0;
-    
+
     while(voice < 4) {
         if (blanks == 0) {
             data_song = data_song_ptr[data_pos];
             data_pos++;
-            
+
             gb_freq = data_song >> 8;
-            
+
              if (gb_freq == 0xFF) {
-                blanks = data_song & 0xFF;     
+                blanks = data_song & 0xFF;
             }
             else {
                 gb_freq = gb_freq >> 1;
@@ -551,7 +551,7 @@ void music()
         if (data_pos > data_len) {
             data_pos = 1;
             patern++;
-            
+
             if (patern >= nbr_patern ){
                 patern = 0;
             }
@@ -566,15 +566,15 @@ void init_music() {
     voice_funcs[1] = voice1;
     voice_funcs[2] = voice2;
     voice_funcs[3] = voice3;
-    
+
     blanks = 0;
     voice = 0;
     data_pos = 1;
     patern=0;
-    
+
     stopmusic();
     patern_definition();
-    
+
     data_len = data_song_ptr[0];
 }
 
