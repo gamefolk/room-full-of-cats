@@ -1,11 +1,11 @@
-#include<gb/gb.h>
+#include <gb/gb.h>
 
 #include "gameplay.h"
 #include "LP1.297a.h"
+#include "text.h"
 
 #include "tiles/splash.c"
 #include "tiles/title.c"
-#include "tiles/font.c"
 
 static void wait_vblanks(UBYTE);
 static void show_fullscreen(UBYTE*, UBYTE*, UBYTE);

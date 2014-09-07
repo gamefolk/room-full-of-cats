@@ -1,6 +1,8 @@
 #include <gb/gb.h>
 #include <rand.h>
 
+#include "text.h"
+
 #include "tiles/fallcats.c"
 #include "tiles/blank.c"
 #include "tiles/stackcats.c"
@@ -314,6 +316,8 @@ void init_gameplay() {
      */
     set_bkg_data(BLANK_CAT_FACE,   0x01, (UBYTE*)blank8);
     set_bkg_data(SIAMESE_CAT_FACE, 0x04, (UBYTE*)faces);
+
+    load_font();
 
     SHOW_BKG;
 
