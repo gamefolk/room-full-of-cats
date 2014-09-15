@@ -54,32 +54,28 @@ void main() {
 
     /* copy font tiles 65 - 71 (letters A - Y) into memory, starting at 0x8E70 */
     for(i = 0; i < 0x190; i++) {
-	*(UWORD*)(0x8E70 + i) = font_tiledata[i + 0x410];
+        *(UWORD*)(0x8E70 + i) = font_tiledata[i + 0x410];
     }
-    
+
     DISPLAY_ON;
     enable_interrupts();
 
+    /* Flash start text until player presses start */
     while (!(joypad() & J_START)) {
-	for (i=0; i < 5; i++) {
-	    wait_vbl_done();
+        for (i = 0; i < 5; i++) {
+            if (joypad() & J_START) break;
+            wait_vblanks(4);
             *(UWORD*)(0x99A4 + i) = message_press[i] + 166;
-	    wait_vbl_done();
-	    *(UWORD*)(0x99AB + i) = message_start[i] + 166;
         }
-	
-	wait_vblanks(5);
-	
-	for (i=0; i < 5; i++) {
-	    wait_vbl_done();
-            *(UWORD*)(0x99A4 + i) = 0x0;
-	    wait_vbl_done();
-	    *(UWORD*)(0x99AB + i) = 0x0;
+
+        for (i = 0; i < 5; i++) {
+            if (joypad() & J_START) break;
+            wait_vblanks(4);
+            *(UWORD*)(0x99AB + i) = message_start[i] + 166;
         }
     }
 
     /* Fade title screen out */
-
     while(palette != 0x00) {
         palette = palette_cycle(palette, 0x00);
         BGP_REG = palette;
