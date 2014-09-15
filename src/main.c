@@ -50,24 +50,31 @@ void main() {
     }
 
     disable_interrupts();
-	DISPLAY_OFF;
+    DISPLAY_OFF;
 
     /* copy font tiles 65 - 71 (letters A - Y) into memory, starting at 0x8E70 */
     for(i = 0; i < 0x190; i++) {
-		*(UWORD*)(0x8E70 + i) = font_tiledata[i + 0x410];
+	*(UWORD*)(0x8E70 + i) = font_tiledata[i + 0x410];
     }
-
+    
     DISPLAY_ON;
-	enable_interrupts();
+    enable_interrupts();
 
     while (!(joypad() & J_START)) {
-        /* display the start message at tile 4, 13, calculating the location of the letter tiles based on the message string */
-        for (i=0; i < 5; i++) {
+	for (i=0; i < 5; i++) {
+	    wait_vbl_done();
             *(UWORD*)(0x99A4 + i) = message_press[i] + 166;
+	    wait_vbl_done();
+	    *(UWORD*)(0x99AB + i) = message_start[i] + 166;
         }
-
-        for (i=0; i < 5; i++) {
-            *(UWORD*)(0x99AB + i) = message_start[i] + 166;
+	
+	wait_vblanks(5);
+	
+	for (i=0; i < 5; i++) {
+	    wait_vbl_done();
+            *(UWORD*)(0x99A4 + i) = 0x0;
+	    wait_vbl_done();
+	    *(UWORD*)(0x99AB + i) = 0x0;
         }
     }
 

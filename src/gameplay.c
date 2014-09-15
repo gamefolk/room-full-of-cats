@@ -343,6 +343,8 @@ void init_gameplay() {
     seed.b.l = DIV_REG;
     seed.b.h = DIV_REG;
     initrand(seed.w);
+    
+    draw_text(0, 0, "TEST");
 }
 
 void do_gameplay() {
