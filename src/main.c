@@ -11,8 +11,8 @@ static void wait_vblanks(UBYTE);
 static void show_fullscreen(UBYTE*, UBYTE*, UBYTE);
 static UBYTE palette_cycle(UBYTE, UBYTE);
 
-const UBYTE* message_press = "PRESS";
-const UBYTE* message_start = "START";
+const char* message_press = "PRESS";
+const char* message_start = "START";
 
 int main() {
     UWORD i;
@@ -21,7 +21,7 @@ int main() {
 
     /* Fade splash screen in */
 
-    show_fullscreen(splash_tiledata, splash_tilemap, palette);
+    show_fullscreen((UBYTE*)splash_tiledata, (UBYTE*)splash_tilemap, palette);
 
     while (palette != 0xE4) {
         palette = palette_cycle(palette, 0xE4);
@@ -41,7 +41,7 @@ int main() {
 
     /* Fade title screen in */
 
-    show_fullscreen(title_tiledata, title_tilemap, palette);
+    show_fullscreen((UBYTE*)title_tiledata, (UBYTE*)title_tilemap, palette);
 
     while (palette != 0xE4) {
         palette = palette_cycle(palette, 0xE4);

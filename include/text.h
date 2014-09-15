@@ -6,7 +6,7 @@
 #include "tiles/font.c"
 
 void load_font();
-void draw_text(UBYTE x, UBYTE y, const UBYTE *text);
+void draw_text(UBYTE x, UBYTE y, const char *text);
 
 #endif /* TEXT_H */
 
