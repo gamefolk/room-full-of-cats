@@ -181,12 +181,17 @@ static void draw_buckets() {
  * Translates a cat sprite tile ID into a cat face background tile address
  */
 static cat_face_t get_cat_face(sprite_t cat_tile) {
-    switch(cat_tile) {
-        case BLANK:         return BLANK_CAT_FACE;
-        case STRIPED_CAT:   return STRIPED_CAT_FACE;
-        case BLACK_CAT:     return BLACK_CAT_FACE;
-        case FALLING_CAT:   return FALLING_CAT_FACE;
-        case SIAMESE_CAT:   return SIAMESE_CAT_FACE;
+    switch (cat_tile) {
+    case BLANK:
+        return BLANK_CAT_FACE;
+    case STRIPED_CAT:
+        return STRIPED_CAT_FACE;
+    case BLACK_CAT:
+        return BLACK_CAT_FACE;
+    case FALLING_CAT:
+        return FALLING_CAT_FACE;
+    case SIAMESE_CAT:
+        return SIAMESE_CAT_FACE;
     }
 }
 
@@ -343,8 +348,6 @@ void init_gameplay() {
     seed.b.l = DIV_REG;
     seed.b.h = DIV_REG;
     initrand(seed.w);
-    
-    draw_text(0, 0, "TEST");
 }
 
 void do_gameplay() {
@@ -354,21 +357,21 @@ void do_gameplay() {
     vblanks++;
 
     buttons = joypad();
-    switch(buttons) {
-        case(J_LEFT):
-            change_cat(8, BLANK);
+    switch (buttons) {
+    case (J_LEFT):
+        change_cat(8, BLANK);
         break;
 
-        case(J_DOWN):
-            change_cat(9, BLANK);
+    case (J_DOWN):
+        change_cat(9, BLANK);
         break;
 
-        case(J_UP):
-            change_cat(10, BLANK);
+    case (J_UP):
+        change_cat(10, BLANK);
         break;
 
-        case(J_RIGHT):
-            change_cat(11, BLANK);
+    case (J_RIGHT):
+        change_cat(11, BLANK);
         break;
     }
 
@@ -380,3 +383,4 @@ void do_gameplay() {
         start_row();
     }
 }
+

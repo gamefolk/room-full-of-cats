@@ -16,3 +16,4 @@ void draw_text(UBYTE x, UBYTE y, const UBYTE *text) {
 
     set_bkg_tiles(x, y, len, 1, (UBYTE*)text);
 }
+
