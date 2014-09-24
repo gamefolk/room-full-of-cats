@@ -10,7 +10,7 @@ int main() {
 	
 	show_splash();
 	show_title();
-
+	
 	show_tutorial();
 	
     init_music();
