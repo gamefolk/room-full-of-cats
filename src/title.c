@@ -6,7 +6,6 @@
 #include "tiles/title.c"
 
 static void wait_vblanks(UBYTE);
-static void show_fullscreen(UBYTE*, UBYTE*, UBYTE);
 static UBYTE palette_cycle(UBYTE, UBYTE);
 
 const char* message_press = "PRESS";
@@ -19,24 +18,6 @@ static void wait_vblanks(UBYTE vblanks) {
     for (; vblanks > 0; vblanks--) {
         wait_vbl_done();
     }
-}
-
-/*
- * Displays the fullscreen image with the given tile data and tile map with the
- * given palette
- */
-static void show_fullscreen(UBYTE* tiles, UBYTE* map, UBYTE palette) {
-    disable_interrupts();
-    DISPLAY_OFF;
-
-    LCDC_REG = 0x01;
-    BGP_REG = palette;
-
-    set_bkg_data(0, 255, tiles);
-    set_bkg_tiles(0, 0, 20, 18, map);
-
-    DISPLAY_ON;
-    enable_interrupts();
 }
 
 /*
@@ -75,7 +56,22 @@ void show_splash() {
 
     /* Fade splash screen in */
 
-    show_fullscreen((UBYTE*)splash_tiledata, (UBYTE*)splash_tilemap, palette);
+    disable_interrupts();
+    DISPLAY_OFF;
+
+     /*
+     * Tile data                  = 0x8800-0x97FF
+     * Background tile map = 9800-9BFF
+     * BG                           = On
+     */
+    LCDC_REG = 0x01;
+    BGP_REG = palette;
+
+    set_bkg_data(0, 255, splash_tiledata);
+    set_bkg_tiles(0, 0, 20, 18, splash_tilemap);
+
+    DISPLAY_ON;
+    enable_interrupts();
 
     while (palette != 0xE4) {
         palette = palette_cycle(palette, 0xE4);
@@ -97,19 +93,22 @@ void show_splash() {
 void show_title() {
 	UBYTE palette = 0x00;
 	UWORD i;
-	
+
 	/* Fade title screen in */
-
-    show_fullscreen((UBYTE*)title_tiledata, (UBYTE*)title_tilemap, palette);
-
-    while (palette != 0xE4) {
-        palette = palette_cycle(palette, 0xE4);
-        BGP_REG = palette;
-        wait_vblanks(20);
-    }
 
     disable_interrupts();
     DISPLAY_OFF;
+
+     /*
+     * Tile data                  = 0x8800-0x97FF
+     * Background tile map = 9800-9BFF
+     * BG                           = On
+     */
+    LCDC_REG = 0x01;
+    BGP_REG = palette;
+
+    set_bkg_data(0, 255, title_tiledata);
+    set_bkg_tiles(0, 0, 20, 18, title_tilemap);
 
     /* copy font tiles 65 - 71 (letters A - Y) into memory, starting at 0x8E70 */
     for (i = 0; i < 0x190; i++) {
@@ -118,6 +117,12 @@ void show_title() {
 
     DISPLAY_ON;
     enable_interrupts();
+
+    while (palette != 0xE4) {
+        palette = palette_cycle(palette, 0xE4);
+        BGP_REG = palette;
+        wait_vblanks(20);
+    }
 
     /* Flash start text until player presses start */
     while (!(joypad() & J_START)) {
