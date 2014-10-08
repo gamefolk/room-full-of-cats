@@ -113,6 +113,8 @@ static void draw_cat(UBYTE, UBYTE, UBYTE);
 #define VBLANK_UPDATE   60              /* Vblanks until gameplay update */
 
 static bucket_t buckets[NUM_COLUMNS];
+static UBYTE score;
+static UBYTE time;
 
 /*
  * Updates the buckets to contain the last cat in each column. If the bucket is
@@ -135,7 +137,8 @@ static void set_buckets() {
                 }
                 continue;
             } else {
-                /* TODO: Increase score */
+                score++;
+                draw_ubyte_win(5, 17 - WIN_TILE_Y, score);
                 /* Clear bucket */
                 buckets[i].num_cats = 0;
                 buckets[i].cat_id = BLANK;
@@ -293,6 +296,9 @@ void init_gameplay() {
     UWORD k;
     fixed seed;
 
+    score = 0;
+    time = 60;
+
     disable_interrupts();
     DISPLAY_OFF;
 
@@ -318,6 +324,12 @@ void init_gameplay() {
 
     /* position the window */
     move_win(WIN_X, WIN_Y);
+
+    /* draw the UI on the window */
+    draw_text_win(0, 17 - WIN_TILE_Y, "CATS:");
+    draw_ubyte_win(5, 17 - WIN_TILE_Y, score);
+    draw_text_win(12, 17 - WIN_TILE_Y, "TIME:");
+    draw_ubyte_win(17, 17 - WIN_TILE_Y, time);
 
     /* draw the pause message on the background, and hide it */
     draw_text(7, 8, "PAUSED");
@@ -394,6 +406,9 @@ void do_gameplay() {
 
     if (vblanks > VBLANK_UPDATE) {
         vblanks = 0;
+        time--;
+
+        draw_ubyte_win(17, 17 - WIN_TILE_Y, time);
 
         set_buckets();
         shift_rows();
