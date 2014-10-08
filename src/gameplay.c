@@ -2,6 +2,7 @@
 #include <rand.h>
 
 #include "text.h"
+#include "LP1.297a.h"
 
 #include "tiles/fallcats.c"
 #include "tiles/blank.c"
@@ -68,6 +69,13 @@ static void draw_cat(UBYTE, UBYTE, UBYTE);
 #define X_END           168
 #define Y_START         16
 #define Y_END           160
+
+/*
+ * The position of the window on the screen
+ */
+#define WIN_X            7                       /* (pixels) align the window to the left of the background */
+#define WIN_Y            80                     /* (pixels) shift the window down so the pause message is visible */
+#define WIN_TILE_Y    10                     /* WIN_Y / 8 pixels per tile
 
 /*
  * Margin gives the spacing between the edges of the screen and where the rows
@@ -264,10 +272,10 @@ static void draw_cat(UBYTE cat_number, UBYTE x, UBYTE y) {
 }
 
 /*
- * Convenience function to draw a cat face tile to the background.
+ * Convenience function to draw a cat face tile to the window, offset such that it appears in background space
  */
 static void draw_cat_face(UBYTE x, UBYTE y, cat_face_t cat_face) {
-    set_bkg_tiles(x, y, 1, 1, (unsigned char*)&cat_face);
+    set_win_tiles(x, y - WIN_TILE_Y, 1, 1, (unsigned char*)&cat_face);
 }
 
 /*
@@ -275,32 +283,45 @@ static void draw_cat_face(UBYTE x, UBYTE y, cat_face_t cat_face) {
  * enters the game loop. It ensures that the appropriate registers are
  * initialized for displaying graphics and that the random number generator is
  * seeded.
+ * The cat faces, score, and time are drawn on the window,
+ * and the pause message is drawn on the background
  */
 void init_gameplay() {
     UBYTE i, j;
     UBYTE x_pos, y_pos;
     UBYTE cat_number;
+    UWORD k;
     fixed seed;
 
     disable_interrupts();
     DISPLAY_OFF;
 
-    LCDC_REG = 0x6F;
+    /* clear the background tile map */
+    for (k = 0; k < 1024; k++) {
+        *(UWORD*)(0x9800 + k) = 0;
+    }
+
     /*
-     * LCD        = Off
-     * WindowBank = 0x9C00-0x9FFF
-     * Window     = On
-     * BG Chr     = 0x8800-0x97FF
-     * BG Bank    = 0x9C00-0x9FFF -- may cause problems for window memory,
-     *                               but for now it allows the background to
-     *                               show
-     * OBJ        = 8x16
-     * OBJ        = On
-     * BG         = On
+     * LCD display                    = Off
+     * Window tile map            = 0x9C00-0x9FFF
+     * Window display             = On
+     * BG tile map                    = 0x8800-0x97FF
+     * BG & Window tile data = 0x9800-0x9BFF
+     * Sprite size                     = 8x16
+     * Sprite display                = On
+     * BG display                      = On
      */
+    LCDC_REG = 0x67;
 
     /* Set palettes */
     BGP_REG = OBP0_REG = OBP1_REG = 0xE4U;
+
+    /* position the window */
+    move_win(WIN_X, WIN_Y);
+
+    /* draw the pause message on the background, and hide it */
+    draw_text(7, 8, "PAUSED");
+    move_bkg(144, 0);
 
     /* Load sprite tiles */
     set_sprite_data(BLANK,       0x04, (UBYTE*)blank16);
@@ -309,22 +330,17 @@ void init_gameplay() {
     set_sprite_data(FALLING_CAT, 0x04, (UBYTE*)cat2);
     set_sprite_data(SIAMESE_CAT, 0x04, (UBYTE*)cat3);
 
-    /* Create all the sprites and make them blank. 2 for each cat. */
+    /* Create all the sprites (2 for each cat), make them blank, and set them to draw behind the background */
     for (i = 0; i < NUM_CATS * 2; i ++) {
         set_sprite_tile(i, BLANK);
+        set_sprite_prop(i, 0x80);
     }
-
-    SHOW_SPRITES;
 
     /* Load background tiles. We can read a all of the small cat faces into
      * memory at once because they are next to each other starting at 0x04.
      */
     set_bkg_data(BLANK_CAT_FACE,   0x01, (UBYTE*)blank8);
     set_bkg_data(SIAMESE_CAT_FACE, 0x04, (UBYTE*)faces);
-
-    load_font();
-
-    SHOW_BKG;
 
     DISPLAY_ON;
     enable_interrupts();
@@ -351,6 +367,7 @@ void init_gameplay() {
 }
 
 void do_gameplay() {
+    static BOOLEAN paused = FALSE;
     static UBYTE vblanks = 0;
     UBYTE buttons;
 
@@ -382,5 +399,14 @@ void do_gameplay() {
         shift_rows();
         start_row();
     }
-}
 
+    /* pause */
+    if (joypad() & J_START) {
+        move_bkg(0, 0);
+        stopmusic();
+        waitpadup();
+        while (!(joypad() & J_START)) {}
+        waitpadup();
+        move_bkg(144, 0);
+    }
+}
