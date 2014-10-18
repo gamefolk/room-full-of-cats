@@ -9,19 +9,43 @@ static void flash_selection();
 #define SPEED_DEFAULT 1
 #define TIME_DEFAULT 1
 
-const char* selections[] = {
+static const char* arrow_left = "<";
+static const char* arrow_right = ">";
+static const char* space_thirteen = "             ";
+static const char* space_one = " ";
+
+static const char* instructions1 = "PLAY WITH";
+static const char* instructions2 = "LEFT, RIGHT, A & B.";
+static const char* instructions3 = "MATCH 5 CATS OF";
+static const char* instructions4 = "SAME TYPE TO SCORE!";
+
+static const char* selections[] = {
 	"2", "3", "4",
 	"SLOW", "MEDIUM", "FAST",
 	"FREE PLAY", "60", "120"
 };
 
-UBYTE selection_index[3];
-UBYTE cur_selection;
-UBYTE flash_timer;
-UBYTE last_key;
+static const UBYTE options_columns[] = {
+    2, 3, 4
+};
 
-BOOLEAN cursor_moved;
-BOOLEAN flash_on;
+static const UBYTE options_speed[] = {
+   120, 60, 30
+};
+
+static const UBYTE options_time[] = {
+    0, 60, 120
+};
+
+static UBYTE selection_index[3];
+static UBYTE cur_selection;
+static UBYTE flash_timer;
+static UBYTE last_key;
+
+static BOOLEAN cursor_moved;
+static BOOLEAN flash_on;
+
+UBYTE options[2];
 
 /*
  * refreshes the UI, flashes the selection arrows and delays input (with flash_timer)
@@ -29,13 +53,12 @@ BOOLEAN flash_on;
 static void flash_selection() {
 	if (cursor_moved) {
 		if (flash_on && (last_key == J_UP || last_key == J_DOWN)) {
-			draw_text(1, 7 + (cur_selection * 3), "<           >");
-			draw_text(2, 7 + (cur_selection * 3),
-				selections[selection_index[cur_selection] + (cur_selection * 3)]);
+			draw_text(1, 7 + (cur_selection * 3), arrow_left);
+            draw_text(13, 7 + (cur_selection * 3), arrow_right);
 		}
 
 		switch (last_key) {
-			case (J_UP) :
+			case (J_UP):
 				if (cur_selection == 0) {
 					cur_selection = 2;
 				} else {
@@ -68,7 +91,7 @@ static void flash_selection() {
 			break;
 		}
 
-		draw_text(1, 7 + (cur_selection * 3), "             ");
+		draw_text(1, 7 + (cur_selection * 3), space_thirteen);
 		draw_text(2, 7 + (cur_selection * 3),
 			selections[selection_index[cur_selection] + (cur_selection * 3)]);
 
@@ -79,13 +102,12 @@ static void flash_selection() {
 
 	if (flash_timer == FLASH_TIME) {
 		if (flash_on) {
-			draw_text(1, 7 + (cur_selection * 3), "<           >");
+			draw_text(1, 7 + (cur_selection * 3), arrow_left);
+            draw_text(13, 7 + (cur_selection * 3), arrow_right);
 		} else {
-			draw_text(1, 7 + (cur_selection * 3), "             ");
+			draw_text(1, 7 + (cur_selection * 3), space_one);
+            draw_text(13, 7 + (cur_selection * 3), space_one);
 		}
-
-		draw_text(2, 7 + (cur_selection * 3),
-			selections[selection_index[cur_selection] + (cur_selection * 3)]);
 
 		flash_on = !flash_on;
 		flash_timer = 0;
@@ -98,7 +120,7 @@ static void flash_selection() {
 /*
  * Displays the UI and queues user input
  */
-void show_tutorial() {
+UBYTE* show_tutorial() {
     UWORD i;
 
 	selection_index[0] = COLUMN_DEFAULT;
@@ -130,10 +152,10 @@ void show_tutorial() {
 
     load_font();
 
-	draw_text(1, 1, "PLAY WITH");
-	draw_text(1, 2, "LEFT, RIGHT, A & B.");
-	draw_text(1, 3, "MATCH 5 CATS OF");
-	draw_text(1, 4, "SAME TYPE TO SCORE!");
+	draw_text(1, 1, instructions1);
+	draw_text(1, 2, instructions2);
+	draw_text(1, 3, instructions3);
+	draw_text(1, 4, instructions4);
 
 	draw_text(1, 6, "# COLUMNS:");
 	draw_text(1, 7, "<           >");
@@ -175,4 +197,10 @@ void show_tutorial() {
 
         wait_vbl_done();
 	}
+
+    options[0] = options_columns[selection_index[0]];
+    options[1] = options_speed[selection_index[1]];
+    options[2] = options_time[selection_index[2]];
+
+    return options;
 }

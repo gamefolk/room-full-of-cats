@@ -289,7 +289,7 @@ static void draw_cat_face(UBYTE x, UBYTE y, cat_face_t cat_face) {
  * The cat faces, score, and time are drawn on the window,
  * and the pause message is drawn on the background
  */
-void init_gameplay() {
+void init_gameplay(UBYTE* options) {
     UBYTE i, j;
     UBYTE x_pos, y_pos;
     UBYTE cat_number;
@@ -297,7 +297,7 @@ void init_gameplay() {
     fixed seed;
 
     score = 0;
-    time = 60;
+    time = options[2];
 
     disable_interrupts();
     DISPLAY_OFF;
@@ -333,6 +333,8 @@ void init_gameplay() {
 
     /* draw the pause message on the background, and hide it */
     draw_text(7, 8, "PAUSED");
+    draw_text(7, 9, "SELECT");
+    draw_text(7, 10, "TO END");
     move_bkg(144, 0);
 
     /* Load sprite tiles */
@@ -378,7 +380,7 @@ void init_gameplay() {
     initrand(seed.w);
 }
 
-void do_gameplay() {
+BOOLEAN do_gameplay() {
     static BOOLEAN paused = FALSE;
     static UBYTE vblanks = 0;
     UBYTE buttons;
@@ -420,8 +422,17 @@ void do_gameplay() {
         move_bkg(0, 0);
         stopmusic();
         waitpadup();
-        while (!(joypad() & J_START)) {}
+
+        while (!(joypad() & J_START)) {
+            /* quit */
+            if (joypad() & J_SELECT) {
+                return FALSE;
+            }
+        }
+
         waitpadup();
         move_bkg(144, 0);
     }
+
+    return TRUE;
 }

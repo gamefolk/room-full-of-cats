@@ -8,8 +8,8 @@
 static void wait_vblanks(UBYTE);
 static UBYTE palette_cycle(UBYTE, UBYTE);
 
-const char* message_press = "PRESS";
-const char* message_start = "START";
+static const char* message_press = "PRESS";
+static const char* message_start = "START";
 
 /*
  * Convenience method - waits for the given number of vblanks
