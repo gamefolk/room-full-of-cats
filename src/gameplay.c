@@ -108,9 +108,9 @@ static void draw_cat(UBYTE, UBYTE, UBYTE);
 #define MAX_CATS_IN_BUCKET  4
 
 /*
- * Constants that affect gameplay.
+ * Constants that affect gameplay
  */
-#define VBLANK_UPDATE   60              /* Vblanks until gameplay update */
+#define VBLANK_TIME 60
 
 static const char* text_score = "CATS:";
 static const char* text_time = "TIME:";
@@ -119,6 +119,9 @@ static const char* text_pause1 = "SELECT";
 static const char* text_pause2 = "TO END";
 
 static bucket_t buckets[NUM_COLUMNS];
+
+static UBYTE vblank_speed;
+
 static UBYTE score;
 static UBYTE time;
 
@@ -302,6 +305,8 @@ void init_gameplay(UBYTE* options) {
     UWORD k;
     fixed seed;
 
+	vblank_speed = options[1];
+	
     score = 0;
     time = options[2];
 
@@ -387,10 +392,12 @@ void init_gameplay(UBYTE* options) {
 
 BOOLEAN do_gameplay() {
     static BOOLEAN paused = FALSE;
-    static UBYTE vblanks = 0;
+    static UBYTE vblanks_time = 0;
+	static UBYTE vblanks_speed = 0;
     UBYTE buttons;
 
-    vblanks++;
+    vblanks_time++;
+	vblanks_speed++;
 
     buttons = joypad();
     switch (buttons) {
@@ -411,16 +418,20 @@ BOOLEAN do_gameplay() {
         break;
     }
 
-    if (vblanks > VBLANK_UPDATE) {
-        vblanks = 0;
-        time--;
-
-        draw_ubyte_win(17, 17 - WIN_TILE_Y, time);
+    if (vblanks_speed > vblank_speed) {
+        vblanks_speed = 0;
 
         set_buckets();
         shift_rows();
         start_row();
     }
+	
+	if (vblanks_time > VBLANK_TIME) {
+		vblanks_time = 0;
+		
+		time--;
+		draw_ubyte_win(17, 17 - WIN_TILE_Y, time);
+	}
 
     /* pause */
     if (joypad() & J_START) {
