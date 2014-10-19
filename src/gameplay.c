@@ -112,6 +112,12 @@ static void draw_cat(UBYTE, UBYTE, UBYTE);
  */
 #define VBLANK_UPDATE   60              /* Vblanks until gameplay update */
 
+static const char* text_score = "CATS:";
+static const char* text_time = "TIME:";
+
+static const char* text_pause1 = "SELECT";
+static const char* text_pause2 = "TO END";
+
 static bucket_t buckets[NUM_COLUMNS];
 static UBYTE score;
 static UBYTE time;
@@ -326,15 +332,14 @@ void init_gameplay(UBYTE* options) {
     move_win(WIN_X, WIN_Y);
 
     /* draw the UI on the window */
-    draw_text_win(0, 17 - WIN_TILE_Y, "CATS:");
+    draw_text_win(0, 17 - WIN_TILE_Y, text_score);
     draw_ubyte_win(5, 17 - WIN_TILE_Y, score);
-    draw_text_win(12, 17 - WIN_TILE_Y, "TIME:");
+    draw_text_win(12, 17 - WIN_TILE_Y, text_time);
     draw_ubyte_win(17, 17 - WIN_TILE_Y, time);
 
     /* draw the pause message on the background, and hide it */
-    draw_text(7, 8, "PAUSED");
-    draw_text(7, 9, "SELECT");
-    draw_text(7, 10, "TO END");
+    draw_text(7, 8, text_pause1);
+    draw_text(7, 9, text_pause2);
     move_bkg(144, 0);
 
     /* Load sprite tiles */

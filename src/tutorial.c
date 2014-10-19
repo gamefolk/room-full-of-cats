@@ -11,6 +11,7 @@ static void flash_selection();
 
 static const char* arrow_left = "<";
 static const char* arrow_right = ">";
+static const char* arrows_space = "<           >";
 static const char* space_thirteen = "             ";
 static const char* space_one = " ";
 
@@ -18,6 +19,12 @@ static const char* instructions1 = "PLAY WITH";
 static const char* instructions2 = "LEFT, RIGHT, A & B.";
 static const char* instructions3 = "MATCH 5 CATS OF";
 static const char* instructions4 = "SAME TYPE TO SCORE!";
+
+static const char* option_columns = "# COLUMNS:";
+static const char* option_speed = "SPEED:";
+static const char* option_time = "TIME:";
+
+static const char* press_start = "PRESS START!";
 
 static const char* selections[] = {
 	"2", "3", "4",
@@ -157,19 +164,19 @@ UBYTE* show_tutorial() {
 	draw_text(1, 3, instructions3);
 	draw_text(1, 4, instructions4);
 
-	draw_text(1, 6, "# COLUMNS:");
-	draw_text(1, 7, "<           >");
+	draw_text(1, 6, option_columns);
+	draw_text(1, 7, arrows_space);
 	draw_text(2, 7, selections[COLUMN_DEFAULT]);
 
-	draw_text(1, 9, "SPEED:");
-	draw_text(1, 10, "<           >");
+	draw_text(1, 9, option_speed);
+	draw_text(1, 10, arrows_space);
 	draw_text(2, 10, selections[SPEED_DEFAULT + 3]);
 
-	draw_text(1, 12, "TIME:");
-	draw_text(1, 13, "<           >");
+	draw_text(1, 12, option_time);
+	draw_text(1, 13, arrows_space);
 	draw_text(2, 13, selections[TIME_DEFAULT + 6]);
 
-	draw_text(4, 15, "PRESS START!");
+	draw_text(4, 15, press_start);
 
     DISPLAY_ON;
 
