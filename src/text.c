@@ -30,7 +30,7 @@ void draw_ubyte_win(UBYTE x, UBYTE y, UBYTE number) {
     static char digit_buffer[3];
 
     digit_buffer[0] = (number / 100) + 48;
-    digit_buffer[1] = (number / 10) + 48;
+    digit_buffer[1] = ((number % 100) / 10) + 48;
     digit_buffer[2] = (number % 10) + 48;
 
     set_win_tiles(x, y, 3, 1, digit_buffer);
