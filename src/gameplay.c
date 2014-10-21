@@ -114,6 +114,7 @@ static void draw_cat(UBYTE, UBYTE, UBYTE);
 
 static const char* text_score = "CATS:";
 static const char* text_time = "TIME:";
+static const char* text_time_free = "XXX";
 
 static const char* text_pause1 = "SELECT";
 static const char* text_pause2 = "TO END";
@@ -306,8 +307,9 @@ void init_gameplay(UBYTE* options) {
     fixed seed;
 
 	vblank_speed = options[1];
-	
+
     score = 0;
+    /* if time = 255, free play */
     time = options[2];
 
     disable_interrupts();
@@ -340,7 +342,12 @@ void init_gameplay(UBYTE* options) {
     draw_text_win(0, 17 - WIN_TILE_Y, text_score);
     draw_ubyte_win(5, 17 - WIN_TILE_Y, score);
     draw_text_win(12, 17 - WIN_TILE_Y, text_time);
-    draw_ubyte_win(17, 17 - WIN_TILE_Y, time);
+
+    if (time != 255) {
+        draw_ubyte_win(17, 17 - WIN_TILE_Y, time);
+    } else {
+        draw_text_win(17, 17 - WIN_TILE_Y, text_time_free);
+    }
 
     /* draw the pause message on the background, and hide it */
     draw_text(7, 8, text_pause1);
@@ -425,12 +432,22 @@ BOOLEAN do_gameplay() {
         shift_rows();
         start_row();
     }
-	
+
 	if (vblanks_time > VBLANK_TIME) {
 		vblanks_time = 0;
-		
-		time--;
-		draw_ubyte_win(17, 17 - WIN_TILE_Y, time);
+
+        if (time == 0) {
+            move_bkg(0, 0);
+            stopmusic();
+            resetmusic();
+            while (!(joypad() & J_SELECT)) {}
+            return FALSE;
+        }
+
+        if (time != 255) {
+            time--;
+            draw_ubyte_win(17, 17 - WIN_TILE_Y, time);
+        }
 	}
 
     /* pause */
@@ -450,5 +467,6 @@ BOOLEAN do_gameplay() {
         move_bkg(144, 0);
     }
 
+    /* continue running */
     return TRUE;
 }

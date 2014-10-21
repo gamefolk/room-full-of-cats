@@ -41,7 +41,7 @@ static const UBYTE options_speed[] = {
 };
 
 static const UBYTE options_time[] = {
-    0, 60, 120
+    255, 60, 120
 };
 
 static UBYTE selection_index[3];
