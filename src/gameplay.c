@@ -87,11 +87,9 @@ static void draw_cat(UBYTE, UBYTE, UBYTE);
  * or columns should start. Padding is the spacing between rows or columns.
  */
 #define COLUMN_PADDING  8
-#define COLUMN_MARGIN   40              /* X_START + 4 * COLUMN_PADDING */
 #define ROW_PADDING     8
 #define ROW_MARGIN      24              /* Y_START + ROW_PADDING */
 #define BUCKET_ROW      14              /* (ROW_MARGIN + 4 * (ROW_PADDING + SPRITE_HEIGHT) + ROW_PADDING) / 8 */
-#define BUCKET_COLUMN   4               /* (COLUMN_MARGIN - 1) / 8 */
 
 /*
  * Room full of cats uses 8x16 sprites, but the cats themselves are represented
@@ -128,9 +126,14 @@ static bucket_t buckets[MAX_COLUMNS];
 
 static void (*control_funcs[3])(UBYTE);
 
-static UBYTE vblank_speed;
+static UBYTE column_margin;
+static UBYTE bucket_column;
+
 static UBYTE num_columns;
 static UBYTE num_cats;
+
+static UBYTE vblank_speed;
+
 static UBYTE last_row_id;
 
 static UBYTE score;
@@ -191,7 +194,7 @@ static void draw_buckets() {
 
     for (i = 0; i < num_columns; i++) {
         cat_tile = buckets[i].cat_id;
-        bucket_x = BUCKET_COLUMN + 3 * i;
+        bucket_x = bucket_column + 3 * i;
         bucket_y = BUCKET_ROW;
         for (j = 0; j < MAX_CATS_IN_BUCKET; j++) {
             x_offset = (j % 2);
@@ -452,6 +455,10 @@ void init_gameplay(UBYTE* options) {
     num_columns = options[0];
     num_cats = num_columns * NUM_ROWS;
     last_row_id = num_columns * 3;
+
+    column_margin = (X_END / 2) - ((SPRITE_WIDTH * num_columns) + (COLUMN_PADDING * num_columns) / 2) + X_START;
+    bucket_column = (column_margin - 1) / 8;
+
 	vblank_speed = options[1];
     time = options[2]; /* if time = 255, free play */
 
@@ -478,7 +485,7 @@ void init_gameplay(UBYTE* options) {
     /* Draw cat sprite locations */
     for (i = 0; i < NUM_ROWS; i++) {
         for (j = 0; j < num_columns; j++) {
-            x_pos = COLUMN_MARGIN;
+            x_pos = column_margin;
             x_pos += j * (COLUMN_PADDING + CAT_WIDTH);
 
             y_pos = ROW_MARGIN;
