@@ -16,7 +16,11 @@ static const char* space_thirteen = "             ";
 static const char* space_one = " ";
 
 static const char* instructions1 = "PLAY WITH";
-static const char* instructions2 = "LEFT, RIGHT, A & B.";
+
+static const char* instructions2[] = {
+    "B & A.             ", "LEFT, B & A.       ", "LEFT, RIGHT, B & A."
+};
+
 static const char* instructions3 = "MATCH 5 CATS OF";
 static const char* instructions4 = "SAME TYPE TO SCORE!";
 
@@ -102,6 +106,10 @@ static void flash_selection() {
 		draw_text(2, 7 + (cur_selection * 3),
 			selections[selection_index[cur_selection] + (cur_selection * 3)]);
 
+        if (cur_selection == 0) {
+            draw_text(1, 2, instructions2[selection_index[cur_selection]]);
+        }
+
 		flash_on = TRUE;
 		cursor_moved = FALSE;
 		flash_timer = 0;
@@ -160,7 +168,7 @@ UBYTE* show_tutorial() {
     load_font();
 
 	draw_text(1, 1, instructions1);
-	draw_text(1, 2, instructions2);
+	draw_text(1, 2, instructions2[COLUMN_DEFAULT]);
 	draw_text(1, 3, instructions3);
 	draw_text(1, 4, instructions4);
 
