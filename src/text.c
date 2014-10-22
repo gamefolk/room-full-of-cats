@@ -9,18 +9,18 @@ void load_font() {
 }
 
 void draw_text(UBYTE x, UBYTE y, const char *text) {
-    int len = strlen((BYTE*)text);
+    UBYTE len = strlen((BYTE*)text);
     if (len + x > 20) {
-        len = 20;
+        len = 20 - x;
     }
 
     set_bkg_tiles(x, y, len, 1, (UBYTE*)text);
 }
 
 void draw_text_win(UBYTE x, UBYTE y, const char *text) {
-    int len = strlen((BYTE*)text);
+    UBYTE len = strlen((BYTE*)text);
     if (len + x > 20) {
-        len = 20;
+        len = 20 - x;
     }
 
     set_win_tiles(x, y, len, 1, (UBYTE*)text);
