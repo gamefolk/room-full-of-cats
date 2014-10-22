@@ -102,10 +102,10 @@ static void draw_cat(UBYTE, UBYTE, UBYTE);
 /*
  * Constants that describe gameplay elements.
  */
-#define NUM_ROWS            4
-#define NUM_COLUMNS         4
-#define NUM_CATS            16              /* NUM_ROWS * NUM_COLUMNS */
-#define MAX_CATS_IN_BUCKET  4
+#define NUM_ROWS                    4
+#define MAX_CATS_IN_BUCKET   4
+#define MAX_COLUMNS               4
+#define MAX_CATS                      16          /* NUM_ROWS * MAX_COLUMNS */
 
 /*
  * Constants that affect gameplay
@@ -119,9 +119,12 @@ static const char* text_time_free = "XXX";
 static const char* text_pause1 = "SELECT";
 static const char* text_pause2 = "TO END";
 
-static bucket_t buckets[NUM_COLUMNS];
+static bucket_t buckets[MAX_COLUMNS];
 
 static UBYTE vblank_speed;
+static UBYTE num_columns;
+static UBYTE num_cats;
+static UBYTE last_row_id;
 
 static UBYTE score;
 static UBYTE time;
@@ -135,10 +138,10 @@ static void set_buckets() {
     UBYTE i;
     sprite_t cat_tile;
 
-    cat_tile = get_cat_tile(12);
+    cat_tile = get_cat_tile(last_row_id);
 
-    for (i = 0; i < NUM_COLUMNS; i++) {
-        cat_tile = get_cat_tile(12 + i);
+    for (i = 0; i < num_columns; i++) {
+        cat_tile = get_cat_tile(last_row_id + i);
         if (buckets[i].cat_id == cat_tile || buckets[i].cat_id == BLANK) {
             if (buckets[i].num_cats < MAX_CATS_IN_BUCKET) {
                 buckets[i].cat_id = cat_tile;
@@ -179,7 +182,7 @@ static void draw_buckets() {
     sprite_t cat_tile;
     cat_face_t face_to_draw;
 
-    for (i = 0; i < NUM_COLUMNS; i++) {
+    for (i = 0; i < num_columns; i++) {
         cat_tile = buckets[i].cat_id;
         bucket_x = BUCKET_COLUMN + 3 * i;
         bucket_y = BUCKET_ROW;
@@ -222,7 +225,7 @@ static cat_face_t get_cat_face(sprite_t cat_tile) {
  */
 static void start_row() {
     UBYTE i;
-    for (i = 0; i < NUM_COLUMNS; i++) {
+    for (i = 0; i < num_columns; i++) {
         change_cat(i, pickCat());
     }
 }
@@ -237,9 +240,9 @@ static void shift_rows() {
      * Iterate backwards through the cats. Stop at the first row, because the
      * first row of cats will be replaced with new cats anyways.
      */
-    for (i = NUM_CATS - 1; i >= NUM_COLUMNS; i--) {
+    for (i = num_cats - 1; i >= num_columns; i--) {
         /* Change the current cat's tile to the cat above it. */
-        change_cat(i, get_cat_tile(i - NUM_COLUMNS));
+        change_cat(i, get_cat_tile(i - num_columns));
     }
 }
 
@@ -306,11 +309,14 @@ void init_gameplay(UBYTE* options) {
     UWORD k;
     fixed seed;
 
+    /* set game options */
+    num_columns = options[0];
+    num_cats = num_columns * NUM_ROWS;
+    last_row_id = num_columns * 3;
 	vblank_speed = options[1];
+    time = options[2]; /* if time = 255, free play */
 
     score = 0;
-    /* if time = 255, free play */
-    time = options[2];
 
     disable_interrupts();
     DISPLAY_OFF;
@@ -362,12 +368,12 @@ void init_gameplay(UBYTE* options) {
     set_sprite_data(SIAMESE_CAT, 0x04, (UBYTE*)cat3);
 
     /* Create all the sprites (2 for each cat), make them blank, and set them to draw behind the background */
-    for (i = 0; i < NUM_CATS * 2; i ++) {
+    for (i = 0; i < MAX_CATS * 2; i++) {
         set_sprite_tile(i, BLANK);
         set_sprite_prop(i, 0x80);
     }
 
-    /* Load background tiles. We can read a all of the small cat faces into
+    /* Load background tiles. We can read all of the small cat faces into
      * memory at once because they are next to each other starting at 0x04.
      */
     set_bkg_data(BLANK_CAT_FACE,   0x01, (UBYTE*)blank8);
@@ -378,14 +384,14 @@ void init_gameplay(UBYTE* options) {
 
     /* Draw cat sprite locations */
     for (i = 0; i < NUM_ROWS; i++) {
-        for (j = 0; j < NUM_COLUMNS; j++) {
+        for (j = 0; j < num_columns; j++) {
             x_pos = COLUMN_MARGIN;
             x_pos += j * (COLUMN_PADDING + CAT_WIDTH);
 
             y_pos = ROW_MARGIN;
             y_pos += i * (ROW_PADDING + CAT_HEIGHT);
 
-            cat_number = i * NUM_COLUMNS + j;
+            cat_number = i * num_columns + j;
 
             draw_cat(cat_number, x_pos, y_pos);
         }
@@ -409,19 +415,19 @@ BOOLEAN do_gameplay() {
     buttons = joypad();
     switch (buttons) {
     case (J_LEFT):
-        change_cat(8, BLANK);
+        change_cat(last_row_id, BLANK);
         break;
 
     case (J_DOWN):
-        change_cat(9, BLANK);
+        change_cat(last_row_id + 1, BLANK);
         break;
 
     case (J_UP):
-        change_cat(10, BLANK);
+        change_cat(last_row_id + 2, BLANK);
         break;
 
     case (J_RIGHT):
-        change_cat(11, BLANK);
+        change_cat(last_row_id + 3, BLANK);
         break;
     }
 
