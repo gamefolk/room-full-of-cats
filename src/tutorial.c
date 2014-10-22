@@ -15,7 +15,7 @@ static const char* arrows_space = "<           >";
 static const char* space_thirteen = "             ";
 static const char* space_one = " ";
 
-static const char* instructions1 = "PLAY WITH";
+static const char* instructions1 = "CATCH CATS WITH";
 
 static const char* instructions2[] = {
     "B & A.             ", "LEFT, B & A.       ", "LEFT, RIGHT, B & A."

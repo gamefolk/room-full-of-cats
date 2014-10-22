@@ -53,6 +53,10 @@ static cat_face_t get_cat_face(sprite_t);
 static void change_cat(UBYTE, UBYTE);
 static void draw_cat_face(UBYTE, UBYTE, cat_face_t);
 static void draw_cat(UBYTE, UBYTE, UBYTE);
+static void control_2(UBYTE);
+static void control_3(UBYTE);
+static void control_4(UBYTE);
+static void move_cursor(UBYTE);
 
 /*
  * Constants useful for drawing sprites. Note that SDCC cannot determine
@@ -111,12 +115,20 @@ static void draw_cat(UBYTE, UBYTE, UBYTE);
 #define MAX_CATS                      16          /* NUM_ROWS * MAX_COLUMNS */
 
 /*
+ * IDs and locations for the cursor
+ */
+#define CURSOR_L_ID                32           /* MAX_CATS * 2 */
+#define CURSOR_R_ID                33           /* CURSOR_L_ID + 1 */
+#define CURSOR_L_X                  16
+#define CURSOR_R_X                 150
+
+/*
  * Constants that affect gameplay
  */
 #define VBLANK_TIME 60
 
-static const char* text_score = "CATS:";
-static const char* text_time = "TIME:";
+static const char* text_score = "CATS";
+static const char* text_time = "TIME";
 static const char* text_time_free = "XXX";
 
 static const char* text_pause1 = "SELECT";
@@ -135,6 +147,8 @@ static UBYTE num_cats;
 static UBYTE vblank_speed;
 
 static UBYTE last_row_id;
+
+static UBYTE cursor_position;
 
 static UBYTE score;
 static UBYTE time;
@@ -161,7 +175,7 @@ static void set_buckets() {
                 continue;
             } else {
                 score++;
-                draw_ubyte_win(5, 17 - WIN_TILE_Y, score);
+                draw_ubyte_win(0, 17 - WIN_TILE_Y, score);
                 /* Clear bucket */
                 buckets[i].num_cats = 0;
                 buckets[i].cat_id = BLANK;
@@ -352,6 +366,12 @@ static void control_4(UBYTE buttons) {
     }
 }
 
+static void move_cursor(UBYTE new_pos) {
+    cursor_position = new_pos;
+    move_sprite(CURSOR_L_ID, CURSOR_L_X, ROW_MARGIN + ((ROW_PADDING + CAT_HEIGHT) * cursor_position));
+    move_sprite(CURSOR_R_ID, CURSOR_R_X, ROW_MARGIN  + ((ROW_PADDING + CAT_HEIGHT) * cursor_position));
+}
+
 /*
  * Called by the game loop when do_gameplay() requests a pause
  * Returns a flag indicating whether the game should continue (TRUE) or quit (FALSE)
@@ -423,8 +443,8 @@ void load_game() {
     move_win(WIN_X, WIN_Y);
 
     /* draw the UI on the window */
-    draw_text_win(0, 17 - WIN_TILE_Y, text_score);
-    draw_text_win(12, 17 - WIN_TILE_Y, text_time);
+    draw_text_win(0, 16 - WIN_TILE_Y, text_score);
+    draw_text_win(16, 16 - WIN_TILE_Y, text_time);
 
     /* Initialize random number generator with contents of DIV_REG */
     seed.b.l = DIV_REG;
@@ -463,7 +483,7 @@ void init_gameplay(UBYTE* options) {
     time = options[2]; /* if time = 255, free play */
 
     score = 0;
-    draw_ubyte_win(5, 17 - WIN_TILE_Y, score);
+    draw_ubyte_win(0, 17 - WIN_TILE_Y, score);
 
     if (time != 255) {
         draw_ubyte_win(17, 17 - WIN_TILE_Y, time);
@@ -496,6 +516,15 @@ void init_gameplay(UBYTE* options) {
             draw_cat(cat_number, x_pos, y_pos);
         }
     }
+
+    /* create the cursor sprites */
+    set_sprite_tile(CURSOR_L_ID, 0x14);
+    set_sprite_prop(CURSOR_L_ID, 0x80);
+    set_sprite_tile(CURSOR_R_ID, 0x15);
+    set_sprite_prop(CURSOR_R_ID, 0x80);
+
+    /* draw the cursor */
+    move_cursor(3);
 }
 
 /*
