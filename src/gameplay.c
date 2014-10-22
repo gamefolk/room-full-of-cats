@@ -2,7 +2,6 @@
 #include <rand.h>
 
 #include "text.h"
-#include "LP1.297a.h"
 
 #include "tiles/fallcats.c"
 #include "tiles/blank.c"
@@ -71,6 +70,12 @@ static void draw_cat(UBYTE, UBYTE, UBYTE);
 #define Y_END           160
 
 /*
+ * The cat faces, score, and time are drawn on the window,
+ * and the pause message is drawn on the background (initially hidden off-screen)
+ * When the user pauses, the background is scrolled back into the visible area.
+ */
+
+/*
  * The position of the window on the screen
  */
 #define WIN_X            7                       /* (pixels) align the window to the left of the background */
@@ -120,6 +125,8 @@ static const char* text_pause1 = "SELECT";
 static const char* text_pause2 = "TO END";
 
 static bucket_t buckets[MAX_COLUMNS];
+
+static void (*control_funcs[3])(UBYTE);
 
 static UBYTE vblank_speed;
 static UBYTE num_columns;
@@ -294,44 +301,92 @@ static void draw_cat_face(UBYTE x, UBYTE y, cat_face_t cat_face) {
     set_win_tiles(x, y - WIN_TILE_Y, 1, 1, (unsigned char*)&cat_face);
 }
 
-/*
- * Initializes the state of the game. Should be called before the program
- * enters the game loop. It ensures that the appropriate registers are
- * initialized for displaying graphics and that the random number generator is
- * seeded.
- * The cat faces, score, and time are drawn on the window,
- * and the pause message is drawn on the background
- */
-void init_gameplay(UBYTE* options) {
-    UBYTE i, j;
-    UBYTE x_pos, y_pos;
-    UBYTE cat_number;
-    UWORD k;
-    fixed seed;
+static void control_2(UBYTE buttons) {
+    switch(buttons) {
+        case (J_B):
+            change_cat(last_row_id, BLANK);
+        break;
 
-    /* set game options */
-    num_columns = options[0];
-    num_cats = num_columns * NUM_ROWS;
-    last_row_id = num_columns * 3;
-	vblank_speed = options[1];
-    time = options[2]; /* if time = 255, free play */
-
-    score = 0;
-
-    disable_interrupts();
-    DISPLAY_OFF;
-
-    /* clear the background tile map */
-    for (k = 0; k < 1024; k++) {
-        *(UWORD*)(0x9800 + k) = 0;
+        case (J_A):
+            change_cat(last_row_id + 1, BLANK);
+        break;
     }
+}
+
+static void control_3(UBYTE buttons) {
+    switch(buttons) {
+        case (J_LEFT):
+            change_cat(last_row_id, BLANK);
+        break;
+
+        case (J_B):
+            change_cat(last_row_id + 1, BLANK);
+        break;
+
+        case (J_A):
+            change_cat(last_row_id + 2, BLANK);
+        break;
+    }
+}
+
+static void control_4(UBYTE buttons) {
+    switch(buttons) {
+        case (J_LEFT):
+            change_cat(last_row_id, BLANK);
+        break;
+
+        case (J_RIGHT):
+            change_cat(last_row_id + 1, BLANK);
+        break;
+
+        case (J_B):
+            change_cat(last_row_id + 2, BLANK);
+        break;
+
+        case (J_A):
+            change_cat(last_row_id + 3, BLANK);
+        break;
+    }
+}
+
+/*
+ * Called by the game loop when do_gameplay() requests a pause
+ * Returns a flag indicating whether the game should continue (TRUE) or quit (FALSE)
+ */
+BOOLEAN pause_game() {
+    move_bkg(0, 0);
+    waitpadup();
+
+    while (!(joypad() & J_START)) {
+        /* quit */
+        if (joypad() & J_SELECT) {
+            return FALSE;
+        }
+    }
+
+    waitpadup();
+    move_bkg(144, 0);
+
+    /* continue running */
+    return TRUE;
+}
+
+/*
+ * Called before entering the main program loop
+ * Sets the LCD and palette registers for both the game AND the tutorial screen
+ * Loads the font, sprite, and background tiles
+ * Positions the window and draws the window UI (score and time indicators)
+ * Seeds the random number generator
+ */
+void load_game() {
+    fixed seed;
 
     /*
      * LCD display                    = Off
      * Window tile map            = 0x9C00-0x9FFF
      * Window display             = On
-     * BG tile map                    = 0x8800-0x97FF
-     * BG & Window tile data = 0x9800-0x9BFF
+     * BG tile map                    = 0x9800-0x9BFF
+     * BG & Window tile data = 0x8800-0x97FF
      * Sprite size                     = 8x16
      * Sprite display                = On
      * BG display                      = On
@@ -341,13 +396,67 @@ void init_gameplay(UBYTE* options) {
     /* Set palettes */
     BGP_REG = OBP0_REG = OBP1_REG = 0xE4U;
 
+    /* set control function pointers */
+    control_funcs[0] = control_2;
+    control_funcs[1] = control_3;
+    control_funcs[2] = control_4;
+
+    load_font();
+
+    /* Load sprite tiles */
+    set_sprite_data(BLANK,       0x04, (UBYTE*)blank16);
+    set_sprite_data(STRIPED_CAT, 0x04, (UBYTE*)cat0);
+    set_sprite_data(BLACK_CAT,   0x04, (UBYTE*)cat1);
+    set_sprite_data(FALLING_CAT, 0x04, (UBYTE*)cat2);
+    set_sprite_data(SIAMESE_CAT, 0x04, (UBYTE*)cat3);
+
+    /* Load background tiles. We can read all of the small cat faces into
+     * memory at once because they are next to each other starting at 0x04.
+     */
+    set_bkg_data(BLANK_CAT_FACE,   0x01, (UBYTE*)blank8);
+    set_bkg_data(SIAMESE_CAT_FACE, 0x04, (UBYTE*)faces);
+
     /* position the window */
     move_win(WIN_X, WIN_Y);
 
     /* draw the UI on the window */
     draw_text_win(0, 17 - WIN_TILE_Y, text_score);
-    draw_ubyte_win(5, 17 - WIN_TILE_Y, score);
     draw_text_win(12, 17 - WIN_TILE_Y, text_time);
+
+    /* Initialize random number generator with contents of DIV_REG */
+    seed.b.l = DIV_REG;
+    seed.b.h = DIV_REG;
+    initrand(seed.w);
+}
+
+/*
+ * Called by the main program loop before each game loop.
+ * Initializes the game based on the options set in the tutorial screen.
+ * Draws the pause message on the background and hides it
+ * Creates and draws the cat sprites
+ */
+void init_gameplay(UBYTE* options) {
+    UBYTE i, j;
+    UBYTE x_pos, y_pos;
+    UBYTE cat_number;
+
+    /* clear the buckets from the last game */
+    for (i = 0; i < MAX_COLUMNS; i++) {
+        buckets[i].num_cats = 0;
+        buckets[i].cat_id = BLANK;
+    }
+
+    draw_buckets();
+
+    /* set game options */
+    num_columns = options[0];
+    num_cats = num_columns * NUM_ROWS;
+    last_row_id = num_columns * 3;
+	vblank_speed = options[1];
+    time = options[2]; /* if time = 255, free play */
+
+    score = 0;
+    draw_ubyte_win(5, 17 - WIN_TILE_Y, score);
 
     if (time != 255) {
         draw_ubyte_win(17, 17 - WIN_TILE_Y, time);
@@ -360,27 +469,11 @@ void init_gameplay(UBYTE* options) {
     draw_text(7, 9, text_pause2);
     move_bkg(144, 0);
 
-    /* Load sprite tiles */
-    set_sprite_data(BLANK,       0x04, (UBYTE*)blank16);
-    set_sprite_data(STRIPED_CAT, 0x04, (UBYTE*)cat0);
-    set_sprite_data(BLACK_CAT,   0x04, (UBYTE*)cat1);
-    set_sprite_data(FALLING_CAT, 0x04, (UBYTE*)cat2);
-    set_sprite_data(SIAMESE_CAT, 0x04, (UBYTE*)cat3);
-
     /* Create all the sprites (2 for each cat), make them blank, and set them to draw behind the background */
     for (i = 0; i < MAX_CATS * 2; i++) {
         set_sprite_tile(i, BLANK);
         set_sprite_prop(i, 0x80);
     }
-
-    /* Load background tiles. We can read all of the small cat faces into
-     * memory at once because they are next to each other starting at 0x04.
-     */
-    set_bkg_data(BLANK_CAT_FACE,   0x01, (UBYTE*)blank8);
-    set_bkg_data(SIAMESE_CAT_FACE, 0x04, (UBYTE*)faces);
-
-    DISPLAY_ON;
-    enable_interrupts();
 
     /* Draw cat sprite locations */
     for (i = 0; i < NUM_ROWS; i++) {
@@ -396,40 +489,21 @@ void init_gameplay(UBYTE* options) {
             draw_cat(cat_number, x_pos, y_pos);
         }
     }
-
-    /* Initialize random number generator with contents of DIV_REG */
-    seed.b.l = DIV_REG;
-    seed.b.h = DIV_REG;
-    initrand(seed.w);
 }
 
-BOOLEAN do_gameplay() {
+/*
+ * Called by the game loop to effect game logic
+ * Returns a flag indicating whether the game should continue (0), pause (1), or quit (2)
+ */
+UBYTE do_gameplay() {
     static BOOLEAN paused = FALSE;
     static UBYTE vblanks_time = 0;
 	static UBYTE vblanks_speed = 0;
-    UBYTE buttons;
 
     vblanks_time++;
 	vblanks_speed++;
 
-    buttons = joypad();
-    switch (buttons) {
-    case (J_LEFT):
-        change_cat(last_row_id, BLANK);
-        break;
-
-    case (J_DOWN):
-        change_cat(last_row_id + 1, BLANK);
-        break;
-
-    case (J_UP):
-        change_cat(last_row_id + 2, BLANK);
-        break;
-
-    case (J_RIGHT):
-        change_cat(last_row_id + 3, BLANK);
-        break;
-    }
+    control_funcs[num_columns - 2](joypad());
 
     if (vblanks_speed > vblank_speed) {
         vblanks_speed = 0;
@@ -444,10 +518,10 @@ BOOLEAN do_gameplay() {
 
         if (time == 0) {
             move_bkg(0, 0);
-            stopmusic();
-            resetmusic();
+
             while (!(joypad() & J_SELECT)) {}
-            return FALSE;
+                /* quit */
+                return 2;
         }
 
         if (time != 255) {
@@ -458,21 +532,9 @@ BOOLEAN do_gameplay() {
 
     /* pause */
     if (joypad() & J_START) {
-        move_bkg(0, 0);
-        stopmusic();
-        waitpadup();
-
-        while (!(joypad() & J_START)) {
-            /* quit */
-            if (joypad() & J_SELECT) {
-                return FALSE;
-            }
-        }
-
-        waitpadup();
-        move_bkg(144, 0);
+        return 1;
     }
 
     /* continue running */
-    return TRUE;
+    return 0;
 }

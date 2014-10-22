@@ -133,12 +133,10 @@ static void flash_selection() {
 }
 
 /*
- * Displays the UI and queues user input
+ * Initializes the state of the tutorial/ options screen and draws the initial UI
  */
-UBYTE* show_tutorial() {
-    UWORD i;
-
-	selection_index[0] = COLUMN_DEFAULT;
+void init_tutorial() {
+    selection_index[0] = COLUMN_DEFAULT;
 	selection_index[1] = SPEED_DEFAULT;
 	selection_index[2] = TIME_DEFAULT;
 
@@ -148,24 +146,6 @@ UBYTE* show_tutorial() {
 
 	flash_on = FALSE;
 	cursor_moved = FALSE;
-
-	disable_interrupts();
-    DISPLAY_OFF;
-
-    /* clear the tile map */
-    for (i = 0; i < 1024; i++) {
-        *(UWORD*)(0x9800 + i) = 0;
-    }
-
-    /*
-     * Tile data                  = 0x8800-0x97FF
-     * Background tile map = 9800-9BFF
-     * BG                           = On
-     */
-    LCDC_REG = 0x01;
-    BGP_REG = 0xE4U;
-
-    load_font();
 
 	draw_text(1, 1, instructions1);
 	draw_text(1, 2, instructions2[COLUMN_DEFAULT]);
@@ -185,11 +165,13 @@ UBYTE* show_tutorial() {
 	draw_text(2, 13, selections[TIME_DEFAULT + 6]);
 
 	draw_text(4, 15, press_start);
+}
 
-    DISPLAY_ON;
-
-    enable_interrupts();
-
+/*
+ * Controls the UI according to user input
+ * Returns the options selected as an array of UBYTEs
+ */
+UBYTE* do_tutorial() {
 	while(!(joypad() & J_START)) {
 		if (last_key != J_DOWN && (joypad() & J_DOWN)) {
 			last_key = J_DOWN;

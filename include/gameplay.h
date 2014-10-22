@@ -1,7 +1,9 @@
 #ifndef GAMEPLAY_H
 #define GAMEPLAY_H
 
+BOOLEAN pause_game();
+void load_game();
 void init_gameplay(UBYTE* options);
-BOOLEAN do_gameplay();
+UBYTE do_gameplay();
 
 #endif

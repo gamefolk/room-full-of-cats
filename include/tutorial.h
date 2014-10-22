@@ -1,6 +1,7 @@
 #ifndef TUTORIAL_H
 #define TUTORIAL_H
 
-UBYTE* show_tutorial();
+void init_tutorial();
+UBYTE* do_tutorial();
 
 #endif
