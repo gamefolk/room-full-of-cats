@@ -53,6 +53,7 @@ static cat_face_t get_cat_face(sprite_t);
 static void change_cat(UBYTE, UBYTE);
 static void draw_cat_face(UBYTE, UBYTE, cat_face_t);
 static void draw_cat(UBYTE, UBYTE, UBYTE);
+static UBYTE get_row_id(UBYTE row);
 static void control_2(UBYTE);
 static void control_3(UBYTE);
 static void control_4(UBYTE);
@@ -320,14 +321,21 @@ static void draw_cat_face(UBYTE x, UBYTE y, cat_face_t cat_face) {
     set_win_tiles(x, y - WIN_TILE_Y, 1, 1, (unsigned char*)&cat_face);
 }
 
+/*
+ * Returns the id of the first tile in the given row
+ */
+static UBYTE get_row_id(UBYTE row) {
+	return num_columns * row;
+}
+
 static void control_2(UBYTE buttons) {
     switch(buttons) {
         case (J_B):
-            change_cat(last_row_id, BLANK);
+            change_cat(get_row_id(cursor_position), BLANK);
         break;
 
         case (J_A):
-            change_cat(last_row_id + 1, BLANK);
+            change_cat(get_row_id(cursor_position) + 1, BLANK);
         break;
     }
 }
@@ -335,15 +343,15 @@ static void control_2(UBYTE buttons) {
 static void control_3(UBYTE buttons) {
     switch(buttons) {
         case (J_LEFT):
-            change_cat(last_row_id, BLANK);
+            change_cat(get_row_id(cursor_position), BLANK);
         break;
 
         case (J_B):
-            change_cat(last_row_id + 1, BLANK);
+            change_cat(get_row_id(cursor_position) + 1, BLANK);
         break;
 
         case (J_A):
-            change_cat(last_row_id + 2, BLANK);
+            change_cat(get_row_id(cursor_position) + 2, BLANK);
         break;
     }
 }
@@ -351,19 +359,19 @@ static void control_3(UBYTE buttons) {
 static void control_4(UBYTE buttons) {
     switch(buttons) {
         case (J_LEFT):
-            change_cat(last_row_id, BLANK);
+            change_cat(get_row_id(cursor_position), BLANK);
         break;
 
         case (J_RIGHT):
-            change_cat(last_row_id + 1, BLANK);
+            change_cat(get_row_id(cursor_position) + 1, BLANK);
         break;
 
         case (J_B):
-            change_cat(last_row_id + 2, BLANK);
+            change_cat(get_row_id(cursor_position) + 2, BLANK);
         break;
 
         case (J_A):
-            change_cat(last_row_id + 3, BLANK);
+            change_cat(get_row_id(cursor_position) + 3, BLANK);
         break;
     }
 }
@@ -528,7 +536,7 @@ void init_gameplay(UBYTE* options) {
     /* set game options */
     num_columns = options[0];
     num_cats = num_columns * NUM_ROWS;
-    last_row_id = num_columns * 3;
+    last_row_id = get_row_id(3);
 
     column_margin = (X_END / 2) - ((SPRITE_WIDTH * num_columns) + (COLUMN_PADDING * num_columns) / 2) + X_START;
     bucket_column = (column_margin - 1) / 8;
