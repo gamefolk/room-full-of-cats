@@ -84,7 +84,7 @@ static void move_cursor(UBYTE);
  */
 #define WIN_X            7                       /* (pixels) align the window to the left of the background */
 #define WIN_Y            80                     /* (pixels) shift the window down so the pause message is visible */
-#define WIN_TILE_Y    10                     /* WIN_Y / 8 pixels per tile
+#define WIN_TILE_Y    10                     /* WIN_Y / 8 pixels per tile */
 
 /*
  * Margin gives the spacing between the edges of the screen and where the rows
