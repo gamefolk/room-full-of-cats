@@ -56,6 +56,7 @@ static void draw_cat(UBYTE, UBYTE, UBYTE);
 static void control_2(UBYTE);
 static void control_3(UBYTE);
 static void control_4(UBYTE);
+static void control_cursor();
 static void move_cursor(UBYTE);
 
 /*
@@ -126,6 +127,7 @@ static void move_cursor(UBYTE);
  * Constants that affect gameplay
  */
 #define VBLANK_TIME 60
+#define CURSOR_DELAY 10
 
 static const char* text_score = "CATS";
 static const char* text_time = "TIME";
@@ -366,6 +368,58 @@ static void control_4(UBYTE buttons) {
     }
 }
 
+/*
+ * Called in do_gameplay to move cursor according to input
+ */
+static void control_cursor() {
+	static BOOLEAN cursor_moved;
+	static UBYTE cursor_timer;
+	static UBYTE last_key;
+	
+	if (last_key != J_DOWN && (joypad() & J_DOWN)) {
+		last_key = J_DOWN;
+		cursor_moved = TRUE;
+	}
+	
+	else if (last_key != J_UP && (joypad() & J_UP)) {
+		last_key = J_UP;
+		cursor_moved = TRUE;
+	}
+	
+	if (cursor_moved) {
+		switch (last_key) {
+			case (J_UP):
+				if (cursor_position == 0) {
+					move_cursor(3);
+				} else {
+					move_cursor(cursor_position - 1);
+				}
+			break;
+		
+			case (J_DOWN):
+				if (cursor_position == 3) {
+					move_cursor(0);
+				} else {
+					move_cursor(cursor_position + 1);
+				}
+			break;
+		}
+		
+		cursor_moved = FALSE;
+		cursor_timer = 0;
+	}
+	
+	if (cursor_timer == CURSOR_DELAY) {
+		cursor_timer = 0;
+		last_key = 0;
+	}
+	
+	cursor_timer++;
+}
+
+/*
+ * Move the cursor sprite to the given row
+ */
 static void move_cursor(UBYTE new_pos) {
     cursor_position = new_pos;
     move_sprite(CURSOR_L_ID, CURSOR_L_X, ROW_MARGIN + ((ROW_PADDING + CAT_HEIGHT) * cursor_position));
@@ -535,11 +589,12 @@ UBYTE do_gameplay() {
     static BOOLEAN paused = FALSE;
     static UBYTE vblanks_time = 0;
 	static UBYTE vblanks_speed = 0;
-
+	
     vblanks_time++;
 	vblanks_speed++;
 
     control_funcs[num_columns - 2](joypad());
+	control_cursor();
 
     if (vblanks_speed > vblank_speed) {
         vblanks_speed = 0;
