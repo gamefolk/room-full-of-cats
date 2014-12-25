@@ -66,21 +66,23 @@ int main() {
             disable_interrupts();
 
             game_flag = do_gameplay();
-
-            if (game_flag == 2) {
-                break;
-            } else if (game_flag == 1) {
+			
+			if (game_flag == 1) {
                 stopmusic();
 
                 if (!pause_game()) {
                     break;
                 }
+            } 
+			else if (game_flag == 2) {
+				stopmusic();
+                game_over();
+				break;
             }
 
             enable_interrupts();
         }
 
-        stopmusic();
         resetmusic();
 
         DISPLAY_OFF;

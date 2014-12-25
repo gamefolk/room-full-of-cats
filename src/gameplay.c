@@ -457,6 +457,14 @@ BOOLEAN pause_game() {
 }
 
 /*
+ * Called by the game loop when do_gameplay() indicates that time is up
+ */
+void game_over() {
+	move_bkg(0, 0);
+	while (!(joypad() & J_SELECT)) {}
+}
+
+/*
  * Called before entering the main program loop
  * Sets the LCD and palette registers for both the game AND the tutorial screen
  * Loads the font, sprite, and background tiles
@@ -579,11 +587,11 @@ void init_gameplay(UBYTE* options) {
         }
     }
 
-    /* create the cursor sprites */
-    set_sprite_tile(CURSOR_L_ID, 0x14);
-    set_sprite_prop(CURSOR_L_ID, 0x80);
-    set_sprite_tile(CURSOR_R_ID, 0x15);
+    /* create the cursor sprites (horizontally flip left sprite) */
+    set_sprite_tile(CURSOR_R_ID, 0xAA);
     set_sprite_prop(CURSOR_R_ID, 0x80);
+	set_sprite_tile(CURSOR_L_ID, 0xAA);
+    set_sprite_prop(CURSOR_L_ID, 0xA0);
 
     /* draw the cursor */
     move_cursor(3);
@@ -591,7 +599,7 @@ void init_gameplay(UBYTE* options) {
 
 /*
  * Called by the game loop to effect game logic
- * Returns a flag indicating whether the game should continue (0), pause (1), or quit (2)
+ * Returns a flag indicating whether the game should continue (0), pause (1), or game over (2)
  */
 UBYTE do_gameplay() {
     static BOOLEAN paused = FALSE;
@@ -616,11 +624,8 @@ UBYTE do_gameplay() {
 		vblanks_time = 0;
 
         if (time == 0) {
-            move_bkg(0, 0);
-
-            while (!(joypad() & J_SELECT)) {}
-                /* quit */
-                return 2;
+			/* game over */
+			return 2;                
         }
 
         if (time != 255) {
