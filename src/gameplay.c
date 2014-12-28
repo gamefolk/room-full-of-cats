@@ -139,8 +139,6 @@ static const char* text_pause2 = "TO END";
 
 static bucket_t buckets[MAX_COLUMNS];
 
-static void (*control_funcs[3])(UBYTE);
-
 static UBYTE column_margin;
 static UBYTE bucket_column;
 
@@ -489,11 +487,6 @@ void load_game() {
     /* Set palettes */
     BGP_REG = OBP0_REG = OBP1_REG = 0xE4U;
 
-    /* set control function pointers */
-    control_funcs[0] = control_2;
-    control_funcs[1] = control_3;
-    control_funcs[2] = control_4;
-
     load_font();
 
     /* Load sprite tiles */
@@ -609,8 +602,18 @@ UBYTE do_gameplay() {
     vblanks_time++;
 	vblanks_speed++;
 
-    control_funcs[num_columns - 2](joypad());
-	control_cursor();
+    switch(num_columns) {
+        case 2:
+            control_2(joypad());
+            break;
+        case 3:
+            control_3(joypad());
+            break;
+        case 4:
+            control_4(joypad());
+            break;
+    }
+    control_cursor();
 
     if (vblanks_speed > vblank_speed) {
         vblanks_speed = 0;
