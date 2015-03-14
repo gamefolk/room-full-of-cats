@@ -277,6 +277,13 @@ static sprite_t get_cat_tile(UBYTE nb) {
     return get_sprite_tile(nb * 2);
 }
 
+/* Clears the OAM of the given sprite */
+static void delete_sprite(UBYTE i) {
+    move_sprite(i, 0, 0);
+    set_sprite_tile(i, 0);
+    set_sprite_prop(i, 0x0);
+}
+
 /*
  * Returns a random cat ID.
  */
@@ -559,11 +566,16 @@ void init_gameplay(UBYTE* options) {
     draw_text(7, 8, text_pause1);
     draw_text(7, 9, text_pause2);
     move_bkg(144, 0);
-
+    
     /* Create all the sprites (2 for each cat), make them blank, and set them to draw behind the background */
-    for (i = 0; i < MAX_CATS * 2; i++) {
+    for (i = 0; i < NUM_ROWS * num_columns * 2; i++) {
         set_sprite_tile(i, BLANK);
         set_sprite_prop(i, 0x80);
+    }
+    
+    /* delete leftover sprite memory */
+    for (i = NUM_ROWS * num_columns * 2; i < MAX_CATS * 2; i++) {
+        delete_sprite(i);
     }
 
     /* Draw cat sprite locations */
