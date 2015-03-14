@@ -12,8 +12,8 @@ int main() {
     UBYTE game_flag;
     UBYTE* options;
 
-	show_splash();
-	show_title();
+    show_splash();
+    show_title();
 
     disable_interrupts();
     DISPLAY_OFF;
@@ -66,18 +66,18 @@ int main() {
             disable_interrupts();
 
             game_flag = do_gameplay();
-			
-			if (game_flag == 1) {
+            
+            if (game_flag == 1) {
                 stopmusic();
 
                 if (!pause_game()) {
                     break;
                 }
             } 
-			else if (game_flag == 2) {
-				stopmusic();
+            else if (game_flag == 2) {
+                stopmusic();
                 game_over();
-				break;
+                break;
             }
 
             enable_interrupts();

@@ -244,7 +244,6 @@ static cat_face_t get_cat_face(sprite_t cat_tile) {
     }
 }
 
-
 /*
  * Sets the top row of sprites to be a new row of random cats.
  */
@@ -323,7 +322,7 @@ static void draw_cat_face(UBYTE x, UBYTE y, cat_face_t cat_face) {
  * Returns the id of the first tile in the given row
  */
 static UBYTE get_row_id(UBYTE row) {
-	return num_columns * row;
+    return num_columns * row;
 }
 
 static void control_2(UBYTE buttons) {
@@ -378,49 +377,49 @@ static void control_4(UBYTE buttons) {
  * Called in do_gameplay to move cursor according to input
  */
 static void control_cursor() {
-	static BOOLEAN cursor_moved;
-	static UBYTE cursor_timer;
-	static UBYTE last_key;
-	
-	if (last_key != J_DOWN && (joypad() & J_DOWN)) {
-		last_key = J_DOWN;
-		cursor_moved = TRUE;
-	}
-	
-	else if (last_key != J_UP && (joypad() & J_UP)) {
-		last_key = J_UP;
-		cursor_moved = TRUE;
-	}
-	
-	if (cursor_moved) {
-		switch (last_key) {
-			case (J_UP):
-				if (cursor_position == 0) {
-					move_cursor(3);
-				} else {
-					move_cursor(cursor_position - 1);
-				}
-			break;
-		
-			case (J_DOWN):
-				if (cursor_position == 3) {
-					move_cursor(0);
-				} else {
-					move_cursor(cursor_position + 1);
-				}
-			break;
-		}
-		
-		cursor_moved = FALSE;
-		cursor_timer = 0;
-	}
-	
-	if (cursor_timer == CURSOR_DELAY) {
-		cursor_timer = 0;
-		last_key = 0;
-	}
-	
-	cursor_timer++;
+    static BOOLEAN cursor_moved;
+    static UBYTE cursor_timer;
+    static UBYTE last_key;
+    
+    if (last_key != J_DOWN && (joypad() & J_DOWN)) {
+        last_key = J_DOWN;
+        cursor_moved = TRUE;
+    }
+    
+    else if (last_key != J_UP && (joypad() & J_UP)) {
+        last_key = J_UP;
+        cursor_moved = TRUE;
+    }
+    
+    if (cursor_moved) {
+        switch (last_key) {
+            case (J_UP):
+                if (cursor_position == 0) {
+                    move_cursor(3);
+                } else {
+                    move_cursor(cursor_position - 1);
+                }
+            break;
+        
+            case (J_DOWN):
+                if (cursor_position == 3) {
+                    move_cursor(0);
+                } else {
+                    move_cursor(cursor_position + 1);
+                }
+            break;
+        }
+        
+        cursor_moved = FALSE;
+        cursor_timer = 0;
+    }
+    
+    if (cursor_timer == CURSOR_DELAY) {
+        cursor_timer = 0;
+        last_key = 0;
+    }
+    
+    cursor_timer++;
 }
 
 /*
@@ -458,8 +457,8 @@ BOOLEAN pause_game() {
  * Called by the game loop when do_gameplay() indicates that time is up
  */
 void game_over() {
-	move_bkg(0, 0);
-	while (!(joypad() & J_SELECT)) {}
+    move_bkg(0, 0);
+    while (!(joypad() & J_SELECT)) {}
 }
 
 /*
@@ -520,6 +519,8 @@ void load_game() {
  * Initializes the game based on the options set in the tutorial screen.
  * Draws the pause message on the background and hides it
  * Creates and draws the cat sprites
+ *
+ * options[0] = # columns, options[1] = speed, options[2] = time
  */
 void init_gameplay(UBYTE* options) {
     UBYTE i, j;
@@ -542,7 +543,7 @@ void init_gameplay(UBYTE* options) {
     column_margin = (X_END / 2) - ((SPRITE_WIDTH * num_columns) + (COLUMN_PADDING * num_columns) / 2) + X_START;
     bucket_column = (column_margin - 1) / 8;
 
-	vblank_speed = options[1];
+    vblank_speed = options[1];
     time = options[2]; /* if time = 255, free play */
 
     score = 0;
@@ -583,7 +584,7 @@ void init_gameplay(UBYTE* options) {
     /* create the cursor sprites (horizontally flip left sprite) */
     set_sprite_tile(CURSOR_R_ID, 0xAA);
     set_sprite_prop(CURSOR_R_ID, 0x80);
-	set_sprite_tile(CURSOR_L_ID, 0xAA);
+    set_sprite_tile(CURSOR_L_ID, 0xAA);
     set_sprite_prop(CURSOR_L_ID, 0xA0);
 
     /* draw the cursor */
@@ -597,10 +598,10 @@ void init_gameplay(UBYTE* options) {
 UBYTE do_gameplay() {
     static BOOLEAN paused = FALSE;
     static UBYTE vblanks_time = 0;
-	static UBYTE vblanks_speed = 0;
-	
+    static UBYTE vblanks_speed = 0;
+    
     vblanks_time++;
-	vblanks_speed++;
+    vblanks_speed++;
 
     switch(num_columns) {
         case 2:
@@ -613,6 +614,7 @@ UBYTE do_gameplay() {
             control_4(joypad());
             break;
     }
+
     control_cursor();
 
     if (vblanks_speed > vblank_speed) {
@@ -623,19 +625,19 @@ UBYTE do_gameplay() {
         start_row();
     }
 
-	if (vblanks_time > VBLANK_TIME) {
-		vblanks_time = 0;
+    if (vblanks_time > VBLANK_TIME) {
+        vblanks_time = 0;
 
         if (time == 0) {
-			/* game over */
-			return 2;                
+            /* game over */
+            return 2;                
         }
 
         if (time != 255) {
             time--;
             draw_ubyte_win(17, 17 - WIN_TILE_Y, time);
         }
-	}
+    }
 
     /* pause */
     if (joypad() & J_START) {

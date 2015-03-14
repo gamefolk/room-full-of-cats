@@ -52,7 +52,7 @@ static UBYTE palette_cycle(UBYTE palette, UBYTE target) {
 }
 
 void show_splash() {
-	UBYTE palette = 0x00;
+    UBYTE palette = 0x00;
 
     /* Fade splash screen in */
 
@@ -91,10 +91,10 @@ void show_splash() {
 }
 
 void show_title() {
-	UBYTE palette = 0x00;
-	UWORD i;
+    UBYTE palette = 0x00;
+    UWORD i;
 
-	/* Fade title screen in */
+    /* Fade title screen in */
 
     disable_interrupts();
     DISPLAY_OFF;
